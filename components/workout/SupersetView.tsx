@@ -2,7 +2,7 @@
 
 import { ExerciseCard } from "@/components/ui/ExerciseCard";
 import { TimerRing } from "@/components/ui/TimerRing";
-import type { Superset, SetLog } from "@/lib/types";
+import type { Superset, SetLog, WeightUnit } from "@/lib/types";
 
 interface SupersetViewProps {
   superset: Superset;
@@ -14,6 +14,8 @@ interface SupersetViewProps {
   onLogBChange: (log: SetLog) => void;
   timerRemaining: number;
   timerRunning: boolean;
+  weightUnit: WeightUnit;
+  prMap: Record<string, number>;
 }
 
 export function SupersetView({
@@ -26,6 +28,8 @@ export function SupersetView({
   onLogBChange,
   timerRemaining,
   timerRunning,
+  weightUnit,
+  prMap,
 }: SupersetViewProps) {
   return (
     <div className="flex flex-col gap-4">
@@ -48,6 +52,11 @@ export function SupersetView({
         prev={superset.a.prev}
         weightKg={logA.weightKg}
         reps={logA.reps}
+        weightUnit={weightUnit}
+        prWeightKg={prMap[superset.a.name]}
+        progression={superset.a.progression}
+        regression={superset.a.regression}
+        form_cues={superset.a.form_cues}
         onWeightChange={(v) => onLogAChange({ ...logA, weightKg: v })}
         onRepsChange={(v) => onLogAChange({ ...logA, reps: v })}
       />
@@ -59,6 +68,11 @@ export function SupersetView({
         prev={superset.b.prev}
         weightKg={logB.weightKg}
         reps={logB.reps}
+        weightUnit={weightUnit}
+        prWeightKg={prMap[superset.b.name]}
+        progression={superset.b.progression}
+        regression={superset.b.regression}
+        form_cues={superset.b.form_cues}
         onWeightChange={(v) => onLogBChange({ ...logB, weightKg: v })}
         onRepsChange={(v) => onLogBChange({ ...logB, reps: v })}
       />

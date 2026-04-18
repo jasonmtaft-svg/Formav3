@@ -1,7 +1,7 @@
-import Anthropic from "@anthropic-ai/sdk";
+import OpenAI from "openai";
 import type { UserPreferences, WorkoutPlan } from "@/lib/types";
 
-const client = new Anthropic();
+const client = new OpenAI();
 
 const SYSTEM_PROMPT = `You are Forma's AI fitness coach. Generate a single superset-based workout session in strict JSON.
 
@@ -12,6 +12,9 @@ Rules:
 - restSeconds is the rest between supersets (60–120 s).
 - prev is always "First session" — the caller will replace it with real history.
 - Tailor exercises to the user's goal and available equipment.
+- progression: a harder variation of the exercise (e.g. add weight, reduce rest, increase range).
+- regression: an easier variation (e.g. bodyweight version, reduced range, supported).
+- form_cues: exactly 3 short technique tips (each under 10 words) covering setup, execution, and a common mistake to avoid.
 
 JSON schema:
 {
@@ -20,8 +23,8 @@ JSON schema:
   "supersets": [
     {
       "restSeconds": number,
-      "a": { "name": string, "detail": string, "prev": string, "timerSeconds": number },
-      "b": { "name": string, "detail": string, "prev": string, "timerSeconds": number }
+      "a": { "name": string, "detail": string, "prev": string, "timerSeconds": number, "progression": string, "regression": string, "form_cues": [string, string, string] },
+      "b": { "name": string, "detail": string, "prev": string, "timerSeconds": number, "progression": string, "regression": string, "form_cues": [string, string, string] }
     }
   ]
 }`;
@@ -35,22 +38,16 @@ Equipment: ${prefs.equipment}
 
 Generate today's superset workout.`;
 
-  const response = await client.messages.create({
-    model: "claude-sonnet-4-20250514",
+  const response = await client.chat.completions.create({
+    model: "gpt-4o",
     max_tokens: 1024,
-    system: [
-      {
-        type: "text",
-        text: SYSTEM_PROMPT,
-        // Prompt caching — saves ~80% token cost on repeated calls
-        cache_control: { type: "ephemeral" },
-      },
+    response_format: { type: "json_object" },
+    messages: [
+      { role: "system", content: SYSTEM_PROMPT },
+      { role: "user", content: userMessage },
     ],
-    messages: [{ role: "user", content: userMessage }],
   });
 
-  const text =
-    response.content[0].type === "text" ? response.content[0].text : "";
-
+  const text = response.choices[0].message.content ?? "";
   return JSON.parse(text) as WorkoutPlan;
 }

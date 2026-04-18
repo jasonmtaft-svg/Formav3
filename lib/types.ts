@@ -7,6 +7,9 @@ export interface Exercise {
   detail: string;
   prev: string;
   timerSeconds: number;
+  progression?: string;   // harder alternative
+  regression?: string;    // easier alternative
+  form_cues?: string[];   // 3-4 technique tips
 }
 
 export interface Superset {
@@ -27,6 +30,7 @@ export interface WorkoutPlan {
 
 export type Goal = "build_muscle" | "lose_fat" | "improve_fitness";
 export type Equipment = "full_gym" | "dumbbells_only" | "bodyweight";
+export type WeightUnit = "kg" | "lbs";
 
 export interface UserPreferences {
   goal: Goal;
@@ -43,6 +47,7 @@ export interface Profile {
   goal: Goal | null;
   days_per_week: number | null;
   equipment: Equipment | null;
+  weight_unit: WeightUnit;
   created_at: string;
 }
 

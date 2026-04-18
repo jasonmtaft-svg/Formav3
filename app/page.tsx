@@ -1,58 +1,14 @@
-import Link from "next/link";
-import { Logo } from "@/components/ui/Logo";
-import { Button } from "@/components/ui/Button";
+import { redirect } from "next/navigation";
+import { createClient } from "@/lib/supabase/server";
+import { SignInForm } from "@/components/auth/SignInForm";
 
-export default function SignInPage() {
-  return (
-    <main className="flex min-h-dvh flex-col items-center justify-center px-6 py-12">
-      <div className="w-full max-w-sm space-y-8">
-        {/* Logo */}
-        <div className="flex flex-col items-center gap-3">
-          <Logo size="lg" />
-          <h1 className="text-2xl font-semibold tracking-tight">Forma</h1>
-          <p className="text-sm text-text-secondary">Your AI training partner.</p>
-        </div>
+export default async function Page() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-        {/* Form — auth wired to Supabase in next step */}
-        <form className="space-y-3">
-          <div>
-            <label htmlFor="email" className="block text-xs text-text-muted mb-1.5">
-              Email
-            </label>
-            <input
-              id="email"
-              type="email"
-              autoComplete="email"
-              required
-              className="w-full rounded-xl border border-border-default bg-surface px-4 py-3 text-sm text-text-primary placeholder:text-text-disabled focus:outline-none focus:border-border-active"
-              placeholder="you@example.com"
-            />
-          </div>
+  if (user) redirect("/workout");
 
-          <div>
-            <label htmlFor="password" className="block text-xs text-text-muted mb-1.5">
-              Password
-            </label>
-            <input
-              id="password"
-              type="password"
-              autoComplete="current-password"
-              required
-              className="w-full rounded-xl border border-border-default bg-surface px-4 py-3 text-sm text-text-primary placeholder:text-text-disabled focus:outline-none focus:border-border-active"
-              placeholder="••••••••"
-            />
-          </div>
-
-          <Button type="submit">Sign in</Button>
-        </form>
-
-        <p className="text-center text-sm text-text-secondary">
-          No account?{" "}
-          <Link href="/signup" className="text-text-primary underline underline-offset-4">
-            Create one
-          </Link>
-        </p>
-      </div>
-    </main>
-  );
+  return <SignInForm />;
 }
