@@ -7,23 +7,18 @@ import { Logo } from "@/components/ui/Logo";
 import { Button } from "@/components/ui/Button";
 import { createClient } from "@/lib/supabase/client";
 
-export default function SignUpPage() {
+export function SignInForm() {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
   async function handleAction(formData: FormData) {
-    const name = formData.get("name") as string;
     const email = formData.get("email") as string;
     const password = formData.get("password") as string;
 
     setError(null);
     const supabase = createClient();
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: { data: { name } },
-    });
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
 
     if (error) {
       setError(error.message);
@@ -31,7 +26,7 @@ export default function SignUpPage() {
     }
 
     router.refresh();
-    router.push("/onboarding");
+    router.push("/workout");
   }
 
   return (
@@ -39,26 +34,11 @@ export default function SignUpPage() {
       <div className="w-full max-w-sm space-y-8">
         <div className="flex flex-col items-center gap-3">
           <Logo size="lg" />
-          <h1 className="text-2xl font-semibold tracking-tight">Create account</h1>
-          <p className="text-sm text-text-secondary">Start training smarter.</p>
+          <h1 className="text-2xl font-semibold tracking-tight">Forma</h1>
+          <p className="text-sm text-text-secondary">Your AI training partner.</p>
         </div>
 
         <form className="space-y-3" action={(fd) => startTransition(() => handleAction(fd))}>
-          <div>
-            <label htmlFor="name" className="block text-xs text-text-muted mb-1.5">
-              Name
-            </label>
-            <input
-              id="name"
-              name="name"
-              type="text"
-              autoComplete="name"
-              required
-              className="w-full rounded-xl border border-border-default bg-surface px-4 py-3 text-sm text-text-primary placeholder:text-text-disabled focus:outline-none focus:border-border-active"
-              placeholder="Your name"
-            />
-          </div>
-
           <div>
             <label htmlFor="email" className="block text-xs text-text-muted mb-1.5">
               Email
@@ -82,24 +62,30 @@ export default function SignUpPage() {
               id="password"
               name="password"
               type="password"
-              autoComplete="new-password"
+              autoComplete="current-password"
               required
               className="w-full rounded-xl border border-border-default bg-surface px-4 py-3 text-sm text-text-primary placeholder:text-text-disabled focus:outline-none focus:border-border-active"
-              placeholder="Min. 8 characters"
+              placeholder="••••••••"
             />
           </div>
 
           {error && <p className="text-sm text-error">{error}</p>}
 
           <Button type="submit" disabled={isPending}>
-            {isPending ? "Creating account…" : "Create account"}
+            {isPending ? "Signing in…" : "Sign in"}
           </Button>
         </form>
 
         <p className="text-center text-sm text-text-secondary">
-          Already have an account?{" "}
-          <Link href="/" className="text-text-primary underline underline-offset-4">
-            Sign in
+          No account?{" "}
+          <Link href="/signup" className="text-text-primary underline underline-offset-4">
+            Create one
+          </Link>
+        </p>
+
+        <p className="text-center text-xs text-text-disabled">
+          <Link href="/onboarding" className="underline underline-offset-4">
+            Preview app (skip auth)
           </Link>
         </p>
       </div>
