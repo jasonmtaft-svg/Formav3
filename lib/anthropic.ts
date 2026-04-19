@@ -47,7 +47,13 @@ Rules:
     intermediate: mix of machines and free weights. Standard compound movements (squats, deadlifts, bench press, rows) are fine. Moderate loads (8–12 reps).
     advanced: full exercise library including complex compounds, unilateral movements, and higher-skill variations. Lower reps (5–10), heavier loads.
 - Across blocks, rotate exercises to target the same muscle groups in fresh ways (e.g. switch from barbell bench to incline dumbbell press between blocks).
-- Day labels should clearly describe the session focus, e.g. "Push A", "Pull B", "Lower A", "Full Body A".
+- Day structure is determined strictly by days per week — do not deviate:
+    1, 2, or 3 days/week → ALL sessions are Full Body (e.g. "Full Body A", "Full Body B", "Full Body C")
+    4 days/week → Upper A, Lower A, Upper B, Lower B
+    5 days/week → Push A, Pull A, Legs, Upper, Lower
+    6 days/week → Push A, Pull A, Legs A, Push B, Pull B, Legs B
+- Day labels must match the structure above exactly.
+- This is a bodybuilding program. Do NOT include any powerlifting or Olympic weightlifting movements. Banned exercises include: power cleans, hang cleans, cleans, clean and press, snatch, hang snatch, push press (behind neck), good mornings (as primary lift). Focus exclusively on bodybuilding movements that isolate and develop muscle hypertrophy.
 
 JSON schema:
 {
