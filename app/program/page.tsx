@@ -2,7 +2,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { BottomNav } from "@/components/ui/BottomNav";
 import { WorkoutDayCard } from "@/components/program/WorkoutDayCard";
-import type { WorkoutPlan, ProgramBlueprint } from "@/lib/types";
+import type { ProgramBlueprint } from "@/lib/types";
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
 
@@ -44,6 +44,11 @@ export default async function ProgramPage() {
   const todayStr = now.toISOString().slice(0, 10);
 
   // Load profile + current program meta in parallel
+  const todayStart = new Date(now);
+  todayStart.setHours(0, 0, 0, 0);
+  const windowEnd = new Date(todayStart);
+  windowEnd.setDate(todayStart.getDate() + 14);
+
   const [{ data: profile }, { data: rawWorkouts }] = await Promise.all([
     user
       ? supabase
@@ -57,8 +62,8 @@ export default async function ProgramPage() {
           .from("workouts")
           .select("id, name, generated_at, payload, week_number, block_number, program_id")
           .eq("user_id", user.id)
-          .gte("generated_at", monday.toISOString())
-          .lt("generated_at", sunday.toISOString())
+          .gte("generated_at", todayStart.toISOString())
+          .lt("generated_at", windowEnd.toISOString())
           .order("generated_at")
       : Promise.resolve({ data: [] }),
   ]);
@@ -109,8 +114,82 @@ export default async function ProgramPage() {
 
   const weeksRemainingInBlock = 4 - ((currentWeek - 1) % 4);
 
-  // ── Build the weekly day array ────────────────────────────────────────────
   const trainingDayIndices = TRAINING_PATTERNS[daysPerWeek] ?? TRAINING_PATTERNS[3];
+
+  // ── Build upcoming sessions (rolling from today) ───────────────────────────
+  type UpcomingSession = {
+    dateStr: string;
+    dayLabel: string;
+    dayNum: number;
+    isToday: boolean;
+    weekNum: number;
+    blockNum: number;
+    dayTemplate: NonNullable<typeof blueprint>["blocks"][0]["days"][0];
+    existingWorkoutId: string | undefined;
+    isCompleted: boolean;
+  };
+
+  const upcomingSessions: UpcomingSession[] = [];
+
+  if (blueprint && currentProgramId) {
+    const forwardWorkouts = rawWorkouts ?? [];
+    const todayWorkoutRow = forwardWorkouts.find(
+      (w) => w.generated_at.slice(0, 10) === todayStr,
+    );
+    const sessionsBeforeToday = totalSessions - (todayWorkoutRow ? 1 : 0);
+
+    // Check which of today's forward workouts are completed
+    const completedIdsForward = new Set<string>();
+    if (forwardWorkouts.length > 0) {
+      const { data: fwdSets } = await supabase
+        .from("logged_sets")
+        .select("workout_id")
+        .in("workout_id", forwardWorkouts.map((w) => w.id));
+      for (const s of fwdSets ?? []) completedIdsForward.add(s.workout_id);
+    }
+
+    const cursor = new Date(todayStart);
+    let sessionOffset = 0;
+
+    while (upcomingSessions.length < daysPerWeek && sessionOffset <= 30) {
+      const dow = cursor.getDay();
+      const mbDow = dow === 0 ? 6 : dow - 1;
+      const dateStr = cursor.toISOString().slice(0, 10);
+
+      if (trainingDayIndices.includes(mbDow)) {
+        const position = sessionsBeforeToday + sessionOffset;
+        const weekNum = Math.min(Math.floor(position / daysPerWeek) + 1, 12);
+        const blockNum = Math.min(Math.ceil(weekNum / 4), 3) as 1 | 2 | 3;
+        const dayIdx = position % daysPerWeek;
+        const blockData = blueprint.blocks[blockNum - 1];
+        const dayTemplate = blockData?.days[dayIdx % blockData.days.length];
+
+        if (dayTemplate) {
+          const existingWorkout = forwardWorkouts.find(
+            (w) => w.generated_at.slice(0, 10) === dateStr,
+          );
+          upcomingSessions.push({
+            dateStr,
+            dayLabel: DAY_LABELS[mbDow],
+            dayNum: cursor.getDate(),
+            isToday: dateStr === todayStr,
+            weekNum,
+            blockNum,
+            dayTemplate,
+            existingWorkoutId: existingWorkout?.id,
+            isCompleted: existingWorkout
+              ? completedIdsForward.has(existingWorkout.id)
+              : false,
+          });
+        }
+        sessionOffset++;
+      }
+
+      cursor.setDate(cursor.getDate() + 1);
+    }
+  }
+
+  // ── Build the weekly day array (for the strip) ────────────────────────────
 
   type DayEntry = {
     idx: number;
@@ -278,124 +357,37 @@ export default async function ProgramPage() {
         })}
       </div>
 
-      {/* ── Day cards ──────────────────────────────────────────────────────── */}
-      <p className="text-[11px] uppercase tracking-widest text-text-muted mb-3">
-        This week&apos;s workouts
-      </p>
-      <div className="space-y-3">
-        {days.map((day) => {
-          // Skip rest days with no workout
-          if (!day.isTraining && !day.workout) return null;
-          if (day.isPast && !day.workout) return null;
-
-          // Today — workout auto-created from blueprint
-          if (day.isToday && !day.workout) {
-            const dayTemplateIdx = trainingDayIndices.indexOf(day.idx);
-            const dayTemplate = blueprint?.blocks[currentBlock - 1]?.days[dayTemplateIdx];
-            if (!currentProgramId || !dayTemplate) {
-              return (
-                <div key={day.dateStr} className="rounded-xl border border-border-default bg-surface p-4">
-                  <p className="text-sm text-text-secondary">
-                    {currentProgramId ? "Loading your session…" : "No program set up yet."}
-                  </p>
-                  {!currentProgramId && (
-                    <Link href="/onboarding" className="mt-2 text-xs text-text-secondary underline underline-offset-4 block">
-                      Set up your program →
-                    </Link>
-                  )}
-                </div>
-              );
-            }
-            return (
+      {/* ── Upcoming sessions ──────────────────────────────────────────────── */}
+      {!blueprint || !currentProgramId ? (
+        <div className="rounded-xl border border-border-default bg-surface p-4">
+          <p className="text-sm text-text-secondary mb-2">No program set up yet.</p>
+          <Link href="/onboarding" className="text-xs text-text-secondary underline underline-offset-4">
+            Set up your program →
+          </Link>
+        </div>
+      ) : (
+        <>
+          <p className="text-[11px] uppercase tracking-widest text-text-muted mb-3">
+            Upcoming sessions
+          </p>
+          <div className="space-y-3">
+            {upcomingSessions.map((session) => (
               <WorkoutDayCard
-                key={day.dateStr}
-                dayLabel={day.label}
-                dayNum={day.dayNum}
-                workoutName={dayTemplate.dayLabel}
-                dayTemplate={dayTemplate.dayLabel}
-                supersets={dayTemplate.supersets}
-                status="today"
-                blockWeekLabel={`Block ${currentBlock} · Week ${currentWeek}`}
-                defaultOpen
+                key={session.dateStr}
+                dayLabel={session.dayLabel}
+                dayNum={session.dayNum}
+                workoutName={session.dayTemplate.dayLabel}
+                dayTemplate={session.dayTemplate.dayLabel}
+                supersets={session.dayTemplate.supersets}
+                status={session.isToday ? "today" : session.isCompleted ? "completed" : "upcoming"}
+                blockWeekLabel={`Block ${session.blockNum} · Week ${session.weekNum}`}
+                historyId={session.existingWorkoutId}
+                defaultOpen={session.isToday}
               />
-            );
-          }
-
-          // Future training day — pull from blueprint
-          if (!day.isPast && !day.isToday && !day.workout) {
-            const dayTemplateIdx = trainingDayIndices.indexOf(day.idx);
-            const dayTemplate = blueprint?.blocks[currentBlock - 1]?.days[dayTemplateIdx];
-            if (!dayTemplate) return null;
-            return (
-              <WorkoutDayCard
-                key={day.dateStr}
-                dayLabel={day.label}
-                dayNum={day.dayNum}
-                workoutName={dayTemplate.dayLabel}
-                dayTemplate={dayTemplate.dayLabel}
-                supersets={dayTemplate.supersets}
-                status="upcoming"
-              />
-            );
-          }
-
-          if (!day.workout) return null;
-
-          const plan = day.workout.payload as WorkoutPlan;
-          const blk = day.workout.block_number;
-          const wk = day.workout.week_number;
-          const blockLabel = blk ? `Block ${blk} · Week ${wk}` : undefined;
-
-          // Completed past workout
-          if (day.isPast && day.isCompleted) {
-            return (
-              <WorkoutDayCard
-                key={day.dateStr}
-                dayLabel={day.label}
-                dayNum={day.dayNum}
-                workoutName={day.workout.name}
-                dayTemplate={plan.day}
-                supersets={plan.supersets}
-                status="completed"
-                blockWeekLabel={blockLabel}
-                historyId={day.workout.id}
-              />
-            );
-          }
-
-          // Missed past workout
-          if (day.isPast && !day.isCompleted) {
-            return (
-              <WorkoutDayCard
-                key={day.dateStr}
-                dayLabel={day.label}
-                dayNum={day.dayNum}
-                workoutName={day.workout.name}
-                dayTemplate={plan.day}
-                supersets={plan.supersets}
-                status="missed"
-                blockWeekLabel={blockLabel}
-                historyId={day.workout.id}
-              />
-            );
-          }
-
-          // Today's workout (already created in DB)
-          return (
-            <WorkoutDayCard
-              key={day.dateStr}
-              dayLabel={day.label}
-              dayNum={day.dayNum}
-              workoutName={day.workout.name}
-              dayTemplate={plan.day}
-              supersets={plan.supersets}
-              status="today"
-              blockWeekLabel={blockLabel}
-              defaultOpen
-            />
-          );
-        })}
-      </div>
+            ))}
+          </div>
+        </>
+      )}
 
       <BottomNav />
     </main>
