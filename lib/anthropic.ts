@@ -34,7 +34,7 @@ Rules:
     Block 3 "Peak"            — weeks 9–12, maximum intensity, another ~20% exercise swap, 90 s rest
 - Each block has exactly {DAYS_PER_WEEK} day templates (the same templates repeat each week of that block).
 - Every workout uses supersets: paired exercises (A and B) performed back-to-back with no rest between them.
-- Each day has 4–5 supersets.
+- Every day template MUST have exactly 4 supersets — never 2, never 3, never fewer than 4. This is a hard requirement.
 - timerSeconds: recommended work duration per exercise in seconds (30–60 s).
 - restSeconds: rest between supersets (match the block guideline above).
 - detail: sets × reps target, e.g. "4 × 8–10 reps" or "3 × 12 reps".
