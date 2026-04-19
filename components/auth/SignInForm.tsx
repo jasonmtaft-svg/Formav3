@@ -35,7 +35,7 @@ export function SignInForm() {
         <div className="flex flex-col items-center gap-3">
           <Logo size="lg" />
           <h1 className="text-2xl font-semibold tracking-tight">Forma</h1>
-          <p className="text-sm text-text-secondary">Your AI training partner.</p>
+          <p className="text-sm text-text-secondary">Your AI Personal Trainer.</p>
         </div>
 
         <form className="space-y-3" action={(fd) => startTransition(() => handleAction(fd))}>
