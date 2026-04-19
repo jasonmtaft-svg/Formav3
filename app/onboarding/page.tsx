@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Logo } from "@/components/ui/Logo";
 import { Chip } from "@/components/ui/Chip";
 import { Button } from "@/components/ui/Button";
+import { BottomNav } from "@/components/ui/BottomNav";
 import { generateProgramAction } from "@/actions/generate-program";
 import type { Goal, Equipment, ExperienceLevel } from "@/lib/types";
 
@@ -192,11 +193,13 @@ export default function OnboardingPage() {
         {error && <p className="text-sm text-error">{error}</p>}
       </div>
 
-      <div className="mt-8">
+      <div className="mt-8 mb-20">
         <Button onClick={handleGenerate} disabled={!canGenerate}>
           Start 12-week program
         </Button>
       </div>
+
+      <BottomNav />
     </main>
   );
 }
