@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { BottomNav } from "@/components/ui/BottomNav";
-import type { WorkoutPlan } from "@/lib/types";
+import type { WorkoutPlan, ProgramBlueprint } from "@/lib/types";
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
 
@@ -62,9 +62,21 @@ export default async function ProgramPage() {
       : Promise.resolve({ data: [] }),
   ]);
 
+  const currentProgramId: string | null = profile?.current_program_id ?? null;
+
+  // Load blueprint so we can show upcoming day templates
+  let blueprint: ProgramBlueprint | null = null;
+  if (currentProgramId) {
+    const { data: prog } = await supabase
+      .from("programs")
+      .select("blueprint")
+      .eq("id", currentProgramId)
+      .single();
+    blueprint = prog?.blueprint ?? null;
+  }
+
   const workouts = rawWorkouts ?? [];
   const daysPerWeek: number = profile?.days_per_week ?? 3;
-  const currentProgramId: string | null = profile?.current_program_id ?? null;
 
   // Which workouts this week are completed (have logged sets)?
   const completedIds = new Set<string>();
@@ -289,12 +301,37 @@ export default async function ProgramPage() {
             );
           }
 
-          // Future training day
+          // Future training day — show exercises from blueprint
           if (!day.isPast && !day.isToday && !day.workout) {
+            const dayTemplateIdx = trainingDayIndices.indexOf(day.idx);
+            const dayTemplate = blueprint?.blocks[currentBlock - 1]?.days[dayTemplateIdx];
             return (
-              <div key={day.dateStr} className="rounded-xl border border-border-subtle bg-surface p-4 opacity-50">
-                <p className="text-[11px] uppercase tracking-widest text-text-muted mb-1">{day.label}</p>
-                <p className="text-sm text-text-secondary">Training day</p>
+              <div key={day.dateStr} className="rounded-xl border border-border-subtle bg-surface overflow-hidden opacity-70">
+                <div className="px-4 py-3 border-b border-border-subtle">
+                  <p className="text-[11px] uppercase tracking-widest text-text-muted mb-0.5">{day.label}</p>
+                  <p className="text-sm font-semibold text-text-primary">{dayTemplate?.dayLabel ?? "Training day"}</p>
+                  {dayTemplate && <p className="text-xs text-text-muted mt-0.5">{dayTemplate.supersets.length} supersets</p>}
+                </div>
+                {dayTemplate && (
+                  <div className="divide-y divide-border-subtle">
+                    {dayTemplate.supersets.map((superset, i) => (
+                      <div key={i} className="px-4 py-3">
+                        <p className="text-[10px] font-medium uppercase tracking-widest text-text-muted mb-1.5">Superset {i + 1}</p>
+                        <div className="space-y-1">
+                          {(["a", "b"] as const).map((slot) => (
+                            <div key={slot} className="flex items-baseline gap-2">
+                              <span className="text-[10px] font-medium uppercase tracking-widest text-text-muted w-3 shrink-0">{slot.toUpperCase()}</span>
+                              <div>
+                                <span className="text-sm text-text-primary">{superset[slot].name}</span>
+                                <span className="text-xs text-text-muted ml-2">{superset[slot].detail}</span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             );
           }
