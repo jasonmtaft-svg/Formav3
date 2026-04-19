@@ -27,10 +27,10 @@ const GOAL_ADJUSTMENTS = [
 ];
 
 const MACRO_PRESETS = [
-  { label: "Balanced", protein: 0.3, fat: 0.35, carbs: 0.35 },
-  { label: "Low Fat", protein: 0.3, fat: 0.15, carbs: 0.55 },
-  { label: "Low Carb", protein: 0.3, fat: 0.5, carbs: 0.2 },
-  { label: "High Protein", protein: 0.4, fat: 0.3, carbs: 0.3 },
+  { label: "Balanced", protein: 0.2, fat: 0.3, carbs: 0.5 },
+  { label: "Low Fat", protein: 0.25, fat: 0.2, carbs: 0.55 },
+  { label: "Low Carb", protein: 0.25, fat: 0.45, carbs: 0.3 },
+  { label: "High Protein", protein: 0.25, fat: 0.3, carbs: 0.45 },
 ];
 
 type Sex = "male" | "female";
