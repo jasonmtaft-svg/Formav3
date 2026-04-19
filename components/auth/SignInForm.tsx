@@ -83,11 +83,6 @@ export function SignInForm() {
           </Link>
         </p>
 
-        <p className="text-center text-xs text-text-disabled">
-          <Link href="/onboarding" className="underline underline-offset-4">
-            Preview app (skip auth)
-          </Link>
-        </p>
       </div>
     </main>
   );
