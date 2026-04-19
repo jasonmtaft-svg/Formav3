@@ -167,7 +167,7 @@ function NutritionContent() {
 // TEMPORARY: set to true to preview the premium content during development.
 // Once the is_premium column is wired up to the database, this will be replaced
 // with a real server-side check.
-const FORCE_PREMIUM_PREVIEW = false;
+const FORCE_PREMIUM_PREVIEW = true;
 
 export default function NutritionPage() {
   // isPremium will eventually come from the user's profile (is_premium column).
