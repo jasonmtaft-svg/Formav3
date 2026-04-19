@@ -5,6 +5,7 @@ import { recipes, CATEGORY_LABELS } from "@/lib/recipes";
 import type { RecipeCategory } from "@/lib/recipes";
 import { RecipeCard } from "@/components/nutrition/RecipeCard";
 import { MealPlanChat } from "@/components/nutrition/MealPlanChat";
+import { BottomNav } from "@/components/ui/BottomNav";
 
 // ---------------------------------------------------------------------------
 // Premium gate — shown to non-premium users
@@ -176,18 +177,21 @@ export default function NutritionPage() {
   const isPremium = FORCE_PREMIUM_PREVIEW;
 
   return (
-    <main className="flex flex-col h-screen pb-16">
-      {/* Header */}
-      <div className="px-4 pt-6 pb-4 border-b border-border-subtle">
-        <h1 className="text-lg font-bold text-text-primary">Nutrition</h1>
-        <p className="text-xs text-text-secondary mt-0.5">
-          AI meal planning · JTFA recipe pack
-        </p>
-      </div>
+    <>
+      <main className="flex flex-col h-screen pb-16">
+        {/* Header */}
+        <div className="px-4 pt-6 pb-4 border-b border-border-subtle">
+          <h1 className="text-lg font-bold text-text-primary">Nutrition</h1>
+          <p className="text-xs text-text-secondary mt-0.5">
+            AI meal planning · JTFA recipe pack
+          </p>
+        </div>
 
-      <div className="flex-1 overflow-hidden">
-        {isPremium ? <NutritionContent /> : <PremiumGate />}
-      </div>
-    </main>
+        <div className="flex-1 overflow-hidden">
+          {isPremium ? <NutritionContent /> : <PremiumGate />}
+        </div>
+      </main>
+      <BottomNav />
+    </>
   );
 }
