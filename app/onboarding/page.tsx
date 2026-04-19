@@ -6,7 +6,7 @@ import { Logo } from "@/components/ui/Logo";
 import { Chip } from "@/components/ui/Chip";
 import { Button } from "@/components/ui/Button";
 import { generateProgramAction } from "@/actions/generate-program";
-import type { Goal, Equipment } from "@/lib/types";
+import type { Goal, Equipment, ExperienceLevel } from "@/lib/types";
 
 const GOALS: { value: Goal; label: string }[] = [
   { value: "build_muscle", label: "Build muscle" },
@@ -18,6 +18,12 @@ const EQUIPMENT_OPTIONS: { value: Equipment; label: string }[] = [
   { value: "full_gym", label: "Full gym" },
   { value: "dumbbells_only", label: "Dumbbells only" },
   { value: "bodyweight", label: "Bodyweight" },
+];
+
+const EXPERIENCE_OPTIONS: { value: ExperienceLevel; label: string; description: string }[] = [
+  { value: "beginner", label: "New to the gym", description: "Less than 6 months experience" },
+  { value: "intermediate", label: "Some experience", description: "6 months to 2 years" },
+  { value: "advanced", label: "Regular gym-goer", description: "2+ years, confident with most exercises" },
 ];
 
 const DAYS = [2, 3, 4, 5, 6];
@@ -35,11 +41,12 @@ export default function OnboardingPage() {
   const [goal, setGoal] = useState<Goal | null>(null);
   const [days, setDays] = useState<number | null>(null);
   const [equipment, setEquipment] = useState<Equipment | null>(null);
+  const [experienceLevel, setExperienceLevel] = useState<ExperienceLevel | null>(null);
   const [loading, setLoading] = useState(false);
   const [loadingStep, setLoadingStep] = useState(0);
   const [error, setError] = useState<string | null>(null);
 
-  const canGenerate = goal && days && equipment;
+  const canGenerate = goal && days && equipment && experienceLevel;
 
   async function handleGenerate() {
     if (!goal || !days || !equipment) return;
@@ -53,7 +60,7 @@ export default function OnboardingPage() {
     }, 1200);
 
     try {
-      await generateProgramAction({ goal, daysPerWeek: days, equipment });
+      await generateProgramAction({ goal, daysPerWeek: days, equipment, experienceLevel });
       router.push("/workout");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong.");
@@ -151,6 +158,32 @@ export default function OnboardingPage() {
                 selected={equipment === e.value}
                 onSelect={() => setEquipment(e.value)}
               />
+            ))}
+          </div>
+        </div>
+
+        <div className="space-y-3">
+          <div>
+            <h2 className="text-xl font-semibold">How experienced are you?</h2>
+            <p className="text-sm text-text-secondary mt-1">
+              We&apos;ll pick exercises that match your ability level.
+            </p>
+          </div>
+          <div className="flex flex-col gap-2">
+            {EXPERIENCE_OPTIONS.map((e) => (
+              <button
+                key={e.value}
+                type="button"
+                onClick={() => setExperienceLevel(e.value)}
+                className={`w-full text-left rounded-xl border px-4 py-3 transition-colors ${
+                  experienceLevel === e.value
+                    ? "border-border-active bg-surface-elevated"
+                    : "border-border-default bg-surface"
+                }`}
+              >
+                <p className="text-sm font-medium text-text-primary">{e.label}</p>
+                <p className="text-xs text-text-secondary mt-0.5">{e.description}</p>
+              </button>
             ))}
           </div>
         </div>

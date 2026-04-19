@@ -51,12 +51,14 @@ export interface ProgramBlueprint {
 
 export type Goal = "build_muscle" | "lose_fat" | "improve_fitness";
 export type Equipment = "full_gym" | "dumbbells_only" | "bodyweight";
+export type ExperienceLevel = "beginner" | "intermediate" | "advanced";
 export type WeightUnit = "kg" | "lbs";
 
 export interface UserPreferences {
   goal: Goal;
   daysPerWeek: number;
   equipment: Equipment;
+  experienceLevel: ExperienceLevel;
 }
 
 // ---------------------------------------------------------------------------
@@ -68,6 +70,7 @@ export interface Profile {
   goal: Goal | null;
   days_per_week: number | null;
   equipment: Equipment | null;
+  experience_level: ExperienceLevel | null;
   weight_unit: WeightUnit;
   current_program_id: string | null;
   created_at: string;

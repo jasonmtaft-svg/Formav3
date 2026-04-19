@@ -26,6 +26,7 @@ export async function generateProgramAction(
     goal: prefs.goal,
     days_per_week: prefs.daysPerWeek,
     equipment: prefs.equipment,
+    experience_level: prefs.experienceLevel,
   });
 
   // Retire any existing active program

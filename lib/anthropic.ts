@@ -42,7 +42,10 @@ Rules:
 - progression: one concise sentence describing a harder variation.
 - regression: one concise sentence describing an easier variation.
 - form_cues: exactly 3 short tips (each under 10 words): setup, execution, common mistake to avoid.
-- Tailor every exercise to the user's goal and equipment.
+- Tailor every exercise to the user's goal, equipment, and experience level:
+    beginner: machines and simple free-weight movements only. No barbell Olympic lifts, no walking lunges, no single-leg deadlifts, no complex coordination movements. Regressions must be truly accessible (e.g. if the exercise is a lunge, the regression is a split squat hold — not a harder lunge variant). Lower relative loads, higher reps (12–15). Prioritise form over load.
+    intermediate: mix of machines and free weights. Standard compound movements (squats, deadlifts, bench press, rows) are fine. Moderate loads (8–12 reps).
+    advanced: full exercise library including complex compounds, unilateral movements, and higher-skill variations. Lower reps (5–10), heavier loads.
 - Across blocks, rotate exercises to target the same muscle groups in fresh ways (e.g. switch from barbell bench to incline dumbbell press between blocks).
 - Day labels should clearly describe the session focus, e.g. "Push A", "Pull B", "Lower A", "Full Body A".
 
@@ -84,6 +87,7 @@ export async function generateProgram(
   const systemPrompt = SYSTEM_PROMPT.replace("{DAYS_PER_WEEK}", String(prefs.daysPerWeek));
 
   const userMessage = `Goal: ${prefs.goal}
+Experience level: ${prefs.experienceLevel}
 Days per week: ${prefs.daysPerWeek}
 Equipment: ${equipmentDesc}
 
