@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Logo } from "@/components/ui/Logo";
 import { Chip } from "@/components/ui/Chip";
 import { Button } from "@/components/ui/Button";
-import { generateWorkoutAction } from "@/actions/generate-workout";
+import { generateProgramAction } from "@/actions/generate-program";
 import type { Goal, Equipment } from "@/lib/types";
 
 const GOALS: { value: Goal; label: string }[] = [
@@ -23,10 +23,11 @@ const EQUIPMENT_OPTIONS: { value: Equipment; label: string }[] = [
 const DAYS = [2, 3, 4, 5, 6];
 
 const LOADING_MESSAGES = [
-  "Analysing your preferences…",
-  "Selecting exercises…",
-  "Pairing supersets…",
-  "Finalising your plan…",
+  "Analysing your goals…",
+  "Designing your 12-week program…",
+  "Building blocks and progressions…",
+  "Pairing supersets for each session…",
+  "Finalising your program…",
 ];
 
 export default function OnboardingPage() {
@@ -52,7 +53,7 @@ export default function OnboardingPage() {
     }, 1200);
 
     try {
-      await generateWorkoutAction({ goal, daysPerWeek: days, equipment });
+      await generateProgramAction({ goal, daysPerWeek: days, equipment });
       router.push("/workout");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong.");
@@ -159,7 +160,7 @@ export default function OnboardingPage() {
 
       <div className="mt-8">
         <Button onClick={handleGenerate} disabled={!canGenerate}>
-          Generate workout
+          Start 12-week program
         </Button>
       </div>
     </main>

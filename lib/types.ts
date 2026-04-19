@@ -9,7 +9,7 @@ export interface Exercise {
   timerSeconds: number;
   progression?: string;   // harder alternative
   regression?: string;    // easier alternative
-  form_cues?: string[];   // 3-4 technique tips
+  form_cues?: string[];   // 3 technique tips
 }
 
 export interface Superset {
@@ -22,6 +22,27 @@ export interface WorkoutPlan {
   workoutName: string;
   day: string;
   supersets: Superset[];
+}
+
+// ---------------------------------------------------------------------------
+// 12-week program blueprint — generated once on onboarding
+// ---------------------------------------------------------------------------
+
+export interface ProgramDay {
+  dayLabel: string;      // e.g. "Push A", "Pull A", "Legs A"
+  supersets: Superset[]; // full superset detail — prev is filled at load time
+}
+
+export interface ProgramBlock {
+  blockNumber: 1 | 2 | 3;
+  theme: string;         // "Foundation" | "Intensification" | "Peak"
+  intensityNote: string; // short coaching note shown to the user
+  days: ProgramDay[];    // exactly daysPerWeek entries
+}
+
+export interface ProgramBlueprint {
+  programName: string;
+  blocks: [ProgramBlock, ProgramBlock, ProgramBlock];
 }
 
 // ---------------------------------------------------------------------------
@@ -48,6 +69,18 @@ export interface Profile {
   days_per_week: number | null;
   equipment: Equipment | null;
   weight_unit: WeightUnit;
+  current_program_id: string | null;
+  created_at: string;
+}
+
+export interface ProgramRecord {
+  id: string;
+  user_id: string;
+  goal: string;
+  equipment: string;
+  days_per_week: number;
+  blueprint: ProgramBlueprint;
+  status: "active" | "completed";
   created_at: string;
 }
 
@@ -60,6 +93,10 @@ export interface WorkoutRecord {
   equipment: string;
   generated_at: string;
   payload: WorkoutPlan;
+  program_id?: string | null;
+  week_number?: number | null;
+  block_number?: number | null;
+  day_index?: number | null;
 }
 
 export interface LoggedSet {
