@@ -49,7 +49,7 @@ export default function OnboardingPage() {
   const canGenerate = goal && days && equipment && experienceLevel;
 
   async function handleGenerate() {
-    if (!goal || !days || !equipment) return;
+    if (!goal || !days || !equipment || !experienceLevel) return;
     setLoading(true);
     setLoadingStep(0);
     setError(null);
