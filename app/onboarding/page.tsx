@@ -61,7 +61,7 @@ export default function OnboardingPage() {
 
     try {
       await generateProgramAction({ goal, daysPerWeek: days, equipment, experienceLevel });
-      router.push("/workout");
+      router.push("/program/overview");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong.");
       setLoading(false);
