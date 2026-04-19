@@ -1,7 +1,6 @@
 "use client";
 
 import { ExerciseCard } from "@/components/ui/ExerciseCard";
-import { TimerRing } from "@/components/ui/TimerRing";
 import type { Superset, SetLog, WeightUnit } from "@/lib/types";
 
 interface SupersetViewProps {
@@ -12,8 +11,6 @@ interface SupersetViewProps {
   logB: SetLog;
   onLogAChange: (log: SetLog) => void;
   onLogBChange: (log: SetLog) => void;
-  timerRemaining: number;
-  timerRunning: boolean;
   weightUnit: WeightUnit;
   prMap: Record<string, number>;
 }
@@ -26,8 +23,6 @@ export function SupersetView({
   logB,
   onLogAChange,
   onLogBChange,
-  timerRemaining,
-  timerRunning,
   weightUnit,
   prMap,
 }: SupersetViewProps) {
@@ -37,12 +32,6 @@ export function SupersetView({
         <p className="text-xs text-text-muted uppercase tracking-widest">
           Superset {index + 1} / {total}
         </p>
-        {timerRunning && (
-          <TimerRing
-            total={superset.a.timerSeconds}
-            remaining={timerRemaining}
-          />
-        )}
       </div>
 
       <ExerciseCard

@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { SupersetView } from "@/components/workout/SupersetView";
 import { WorkoutHeader } from "@/components/workout/WorkoutHeader";
@@ -13,27 +12,7 @@ import { useWorkout } from "@/lib/workout-context";
 export default function WorkoutPage() {
   const router = useRouter();
   const { session, completedWorkoutId, isLoading, weightUnit, prMap, updateLog, advanceSuperset } = useWorkout();
-  const [timerRemaining, setTimerRemaining] = useState(0);
-  const [timerRunning, setTimerRunning] = useState(false);
-
   const superset = session?.plan.supersets[session.currentSupersetIndex];
-
-  // Reset and start timer whenever the superset changes
-  useEffect(() => {
-    if (!superset) return;
-    setTimerRemaining(superset.a.timerSeconds);
-    setTimerRunning(true);
-  }, [session?.currentSupersetIndex]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Countdown tick
-  useEffect(() => {
-    if (!timerRunning || timerRemaining <= 0) {
-      setTimerRunning(false);
-      return;
-    }
-    const id = setTimeout(() => setTimerRemaining((t) => t - 1), 1000);
-    return () => clearTimeout(id);
-  }, [timerRunning, timerRemaining]);
 
   function handleComplete() {
     if (!session || !superset) return;
@@ -117,8 +96,6 @@ export default function WorkoutPage() {
           onLogBChange={(log) =>
             updateLog(session.currentSupersetIndex, "b", log)
           }
-          timerRemaining={timerRemaining}
-          timerRunning={timerRunning}
           weightUnit={weightUnit}
           prMap={prMap}
         />
