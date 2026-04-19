@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { BottomNav } from "@/components/ui/BottomNav";
+import { WorkoutDayCard } from "@/components/program/WorkoutDayCard";
 import type { WorkoutPlan, ProgramBlueprint } from "@/lib/types";
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
@@ -278,150 +279,120 @@ export default async function ProgramPage() {
       </div>
 
       {/* ── Day cards ──────────────────────────────────────────────────────── */}
+      <p className="text-[11px] uppercase tracking-widest text-text-muted mb-3">
+        This week&apos;s workouts
+      </p>
       <div className="space-y-3">
         {days.map((day) => {
-          if (!day.isTraining && !day.workout && !day.isToday) return null;
+          // Skip rest days with no workout
+          if (!day.isTraining && !day.workout) return null;
           if (day.isPast && !day.workout) return null;
 
-          // Today, workout auto-loads from program — just show Train button
+          // Today — workout auto-created from blueprint
           if (day.isToday && !day.workout) {
+            const dayTemplateIdx = trainingDayIndices.indexOf(day.idx);
+            const dayTemplate = blueprint?.blocks[currentBlock - 1]?.days[dayTemplateIdx];
+            if (!currentProgramId || !dayTemplate) {
+              return (
+                <div key={day.dateStr} className="rounded-xl border border-border-default bg-surface p-4">
+                  <p className="text-sm text-text-secondary">
+                    {currentProgramId ? "Loading your session…" : "No program set up yet."}
+                  </p>
+                  {!currentProgramId && (
+                    <Link href="/onboarding" className="mt-2 text-xs text-text-secondary underline underline-offset-4 block">
+                      Set up your program →
+                    </Link>
+                  )}
+                </div>
+              );
+            }
             return (
-              <div key={day.dateStr} className="rounded-xl border border-border-default bg-surface p-4">
-                <p className="text-[11px] uppercase tracking-widest text-text-muted mb-1">Today</p>
-                <p className="text-sm font-medium text-text-primary mb-3">
-                  {currentProgramId ? "Your session is ready" : "No program set up yet"}
-                </p>
-                <Link
-                  href={currentProgramId ? "/workout" : "/onboarding"}
-                  className="text-xs text-text-secondary underline underline-offset-4"
-                >
-                  {currentProgramId ? "Start training →" : "Set up your program →"}
-                </Link>
-              </div>
+              <WorkoutDayCard
+                key={day.dateStr}
+                dayLabel={day.label}
+                dayNum={day.dayNum}
+                workoutName={dayTemplate.dayLabel}
+                dayTemplate={dayTemplate.dayLabel}
+                supersets={dayTemplate.supersets}
+                status="today"
+                blockWeekLabel={`Block ${currentBlock} · Week ${currentWeek}`}
+                defaultOpen
+              />
             );
           }
 
-          // Future training day — show exercises from blueprint
+          // Future training day — pull from blueprint
           if (!day.isPast && !day.isToday && !day.workout) {
             const dayTemplateIdx = trainingDayIndices.indexOf(day.idx);
             const dayTemplate = blueprint?.blocks[currentBlock - 1]?.days[dayTemplateIdx];
+            if (!dayTemplate) return null;
             return (
-              <div key={day.dateStr} className="rounded-xl border border-border-subtle bg-surface overflow-hidden opacity-70">
-                <div className="px-4 py-3 border-b border-border-subtle">
-                  <p className="text-[11px] uppercase tracking-widest text-text-muted mb-0.5">{day.label}</p>
-                  <p className="text-sm font-semibold text-text-primary">{dayTemplate?.dayLabel ?? "Training day"}</p>
-                  {dayTemplate && <p className="text-xs text-text-muted mt-0.5">{dayTemplate.supersets.length} supersets</p>}
-                </div>
-                {dayTemplate && (
-                  <div className="divide-y divide-border-subtle">
-                    {dayTemplate.supersets.map((superset, i) => (
-                      <div key={i} className="px-4 py-3">
-                        <p className="text-[10px] font-medium uppercase tracking-widest text-text-muted mb-1.5">Superset {i + 1}</p>
-                        <div className="space-y-1">
-                          {(["a", "b"] as const).map((slot) => (
-                            <div key={slot} className="flex items-baseline gap-2">
-                              <span className="text-[10px] font-medium uppercase tracking-widest text-text-muted w-3 shrink-0">{slot.toUpperCase()}</span>
-                              <div>
-                                <span className="text-sm text-text-primary">{superset[slot].name}</span>
-                                <span className="text-xs text-text-muted ml-2">{superset[slot].detail}</span>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
+              <WorkoutDayCard
+                key={day.dateStr}
+                dayLabel={day.label}
+                dayNum={day.dayNum}
+                workoutName={dayTemplate.dayLabel}
+                dayTemplate={dayTemplate.dayLabel}
+                supersets={dayTemplate.supersets}
+                status="upcoming"
+              />
             );
           }
 
           if (!day.workout) return null;
 
           const plan = day.workout.payload as WorkoutPlan;
-          const wk = day.workout.week_number;
           const blk = day.workout.block_number;
-          const blockLabel = blk ? `Block ${blk} · Week ${wk}` : null;
+          const wk = day.workout.week_number;
+          const blockLabel = blk ? `Block ${blk} · Week ${wk}` : undefined;
 
           // Completed past workout
           if (day.isPast && day.isCompleted) {
             return (
-              <Link key={day.dateStr} href={`/history/${day.workout.id}`} className="block rounded-xl border border-border-default bg-surface p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-[11px] uppercase tracking-widest text-text-muted mb-0.5">
-                      {day.label} · Done{blockLabel ? ` · ${blockLabel}` : ""}
-                    </p>
-                    <p className="text-sm font-semibold text-text-primary">{day.workout.name}</p>
-                    <p className="text-xs text-text-secondary mt-0.5">{plan.day}</p>
-                  </div>
-                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-text-muted shrink-0">
-                    <path d="M6 12l4-4-4-4" />
-                  </svg>
-                </div>
-              </Link>
+              <WorkoutDayCard
+                key={day.dateStr}
+                dayLabel={day.label}
+                dayNum={day.dayNum}
+                workoutName={day.workout.name}
+                dayTemplate={plan.day}
+                supersets={plan.supersets}
+                status="completed"
+                blockWeekLabel={blockLabel}
+                historyId={day.workout.id}
+              />
             );
           }
 
           // Missed past workout
           if (day.isPast && !day.isCompleted) {
             return (
-              <Link key={day.dateStr} href={`/history/${day.workout.id}`} className="block rounded-xl border border-border-subtle bg-surface p-4 opacity-60">
-                <p className="text-[11px] uppercase tracking-widest text-text-muted mb-0.5">{day.label} · Missed</p>
-                <p className="text-sm text-text-secondary">{day.workout.name}</p>
-              </Link>
+              <WorkoutDayCard
+                key={day.dateStr}
+                dayLabel={day.label}
+                dayNum={day.dayNum}
+                workoutName={day.workout.name}
+                dayTemplate={plan.day}
+                supersets={plan.supersets}
+                status="missed"
+                blockWeekLabel={blockLabel}
+                historyId={day.workout.id}
+              />
             );
           }
 
-          // Today's workout (expanded)
+          // Today's workout (already created in DB)
           return (
-            <div key={day.dateStr} className="rounded-xl border border-border-default bg-surface overflow-hidden">
-              <div className="px-4 pt-4 pb-3">
-                <p className="text-[11px] uppercase tracking-widest text-text-muted mb-0.5">
-                  Today{blockLabel ? ` · ${blockLabel}` : ""}
-                </p>
-                <p className="text-sm font-semibold text-text-primary">{day.workout.name}</p>
-                <p className="text-xs text-text-secondary mt-0.5">{plan.day}</p>
-              </div>
-
-              <div className="border-t border-border-subtle divide-y divide-border-subtle">
-                {plan.supersets.map((superset, i) => (
-                  <div key={i} className="px-4 py-3 space-y-3">
-                    <p className="text-[10px] font-medium uppercase tracking-widest text-text-muted">
-                      Superset {i + 1}
-                    </p>
-                    {(["a", "b"] as const).map((slot) => {
-                      const ex = superset[slot];
-                      return (
-                        <div key={slot} className="space-y-1.5">
-                          <div>
-                            <span className="text-[10px] font-medium uppercase tracking-widest text-text-muted mr-1.5">
-                              {slot.toUpperCase()}
-                            </span>
-                            <span className="text-sm font-medium text-text-primary">{ex.name}</span>
-                            <p className="text-xs text-text-secondary mt-0.5">{ex.detail}</p>
-                          </div>
-                          {(ex.regression || ex.progression) && (
-                            <div className="pl-4 space-y-1">
-                              {ex.regression && (
-                                <p className="text-[11px] text-text-muted">
-                                  <span className="font-medium">Too hard:</span> {ex.regression}
-                                </p>
-                              )}
-                              {ex.progression && (
-                                <p className="text-[11px] text-text-muted">
-                                  <span className="font-medium">Too easy:</span> {ex.progression}
-                                </p>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                ))}
-              </div>
-            </div>
+            <WorkoutDayCard
+              key={day.dateStr}
+              dayLabel={day.label}
+              dayNum={day.dayNum}
+              workoutName={day.workout.name}
+              dayTemplate={plan.day}
+              supersets={plan.supersets}
+              status="today"
+              blockWeekLabel={blockLabel}
+              defaultOpen
+            />
           );
         })}
       </div>
