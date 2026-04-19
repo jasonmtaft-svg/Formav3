@@ -91,18 +91,30 @@ Experience level: ${prefs.experienceLevel}
 Days per week: ${prefs.daysPerWeek}
 Equipment: ${equipmentDesc}
 
-Generate the full 12-week program. Each block must have exactly ${prefs.daysPerWeek} day template(s).`;
+Generate the full 12-week program. Each block must have exactly ${prefs.daysPerWeek} day template(s). Every single day must have exactly 4 supersets — no exceptions.`;
 
-  const response = await client.chat.completions.create({
-    model: "gpt-4o",
-    max_tokens: 16000,
-    response_format: { type: "json_object" },
-    messages: [
-      { role: "system", content: systemPrompt },
-      { role: "user", content: userMessage },
-    ],
-  });
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    const response = await client.chat.completions.create({
+      model: "gpt-4o",
+      max_tokens: 16000,
+      response_format: { type: "json_object" },
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userMessage },
+      ],
+    });
 
-  const text = response.choices[0].message.content ?? "";
-  return JSON.parse(text) as ProgramBlueprint;
+    const text = response.choices[0].message.content ?? "";
+    const blueprint = JSON.parse(text) as ProgramBlueprint;
+
+    // Reject and retry if any day has fewer than 4 supersets
+    const tooFew = blueprint.blocks.some((block) =>
+      block.days.some((day) => day.supersets.length < 4),
+    );
+    if (!tooFew) return blueprint;
+
+    if (attempt === 3) throw new Error("Could not generate a program with 4 supersets per day after 3 attempts.");
+  }
+
+  throw new Error("Unreachable");
 }
