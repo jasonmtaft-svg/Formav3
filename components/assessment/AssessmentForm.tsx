@@ -258,7 +258,6 @@ export function AssessmentForm({
           ref={fileInputRef}
           type="file"
           accept="image/*"
-          capture="user"
           onChange={handlePhotoChange}
           className="sr-only"
           id="photo-input"
