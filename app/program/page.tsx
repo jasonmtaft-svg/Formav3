@@ -53,7 +53,7 @@ export default async function ProgramPage() {
     user
       ? supabase
           .from("profiles")
-          .select("days_per_week, current_program_id")
+          .select("days_per_week, current_program_id, experience_level")
           .eq("id", user.id)
           .single()
       : Promise.resolve({ data: null }),
@@ -70,15 +70,19 @@ export default async function ProgramPage() {
 
   const currentProgramId: string | null = profile?.current_program_id ?? null;
 
-  // Load blueprint so we can show upcoming day templates
+  // Load blueprint + program metadata so we can show upcoming day templates and enable swaps
   let blueprint: ProgramBlueprint | null = null;
+  let programGoal: string | undefined;
+  let programEquipment: string | undefined;
   if (currentProgramId) {
     const { data: prog } = await supabase
       .from("programs")
-      .select("blueprint")
+      .select("blueprint, goal, equipment")
       .eq("id", currentProgramId)
       .single();
     blueprint = prog?.blueprint ?? null;
+    programGoal = prog?.goal ?? undefined;
+    programEquipment = prog?.equipment ?? undefined;
   }
 
   const workouts = rawWorkouts ?? [];
@@ -124,6 +128,8 @@ export default async function ProgramPage() {
     isToday: boolean;
     weekNum: number;
     blockNum: number;
+    blockIndex: number;   // 0-based, for swap action
+    dayIndex: number;     // index into block.days[], for swap action
     dayTemplate: NonNullable<typeof blueprint>["blocks"][0]["days"][0];
     existingWorkoutId: string | undefined;
     isCompleted: boolean;
@@ -175,6 +181,8 @@ export default async function ProgramPage() {
             isToday: dateStr === todayStr,
             weekNum,
             blockNum,
+            blockIndex: blockNum - 1,
+            dayIndex: dayIdx % blockData.days.length,
             dayTemplate,
             existingWorkoutId: existingWorkout?.id,
             isCompleted: existingWorkout
@@ -383,6 +391,12 @@ export default async function ProgramPage() {
                 blockWeekLabel={`Block ${session.blockNum} · Week ${session.weekNum}`}
                 historyId={session.existingWorkoutId}
                 defaultOpen={session.isToday}
+                programId={currentProgramId ?? undefined}
+                blockIndex={session.blockIndex}
+                dayIndex={session.dayIndex}
+                goal={programGoal}
+                equipment={programEquipment}
+                experienceLevel={profile?.experience_level ?? undefined}
               />
             ))}
           </div>

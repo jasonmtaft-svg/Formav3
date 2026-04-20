@@ -4,6 +4,8 @@ import { BottomNav } from "@/components/ui/BottomNav";
 import { SignOutButton } from "@/components/ui/SignOutButton";
 import { DangerZone } from "@/components/ui/DangerZone";
 import { updateWeightUnitAction } from "@/actions/update-weight-unit";
+import Link from "next/link";
+import type { StrengthAssessment } from "@/lib/types";
 
 const GOAL_LABELS: Record<string, string> = {
   build_muscle: "Build muscle",
@@ -160,6 +162,32 @@ export default async function ProfilePage() {
       </div>
 
       <div className="mt-8 space-y-3">
+        {/* Strength assessment */}
+        <Link
+          href="/assessment"
+          className="block rounded-xl border border-border-default bg-surface p-4"
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-xs text-text-muted uppercase tracking-widest mb-1">
+                Strength Assessment
+              </p>
+              {(profile?.strength_assessment as StrengthAssessment | null)?.assessedAt ? (
+                <p className="text-sm text-text-primary">
+                  View your starting weights guide →
+                </p>
+              ) : (
+                <p className="text-sm text-text-primary">
+                  Get AI-estimated starting weights →
+                </p>
+              )}
+              <p className="text-xs text-text-muted mt-0.5">
+                Upload a photo · rough guide only
+              </p>
+            </div>
+          </div>
+        </Link>
+
         <div className="rounded-xl border border-border-default bg-surface p-4 space-y-1">
           <p className="text-xs text-text-muted uppercase tracking-widest mb-2">
             Install app

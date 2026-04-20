@@ -73,6 +73,7 @@ export interface Profile {
   experience_level: ExperienceLevel | null;
   weight_unit: WeightUnit;
   current_program_id: string | null;
+  strength_assessment: StrengthAssessment | null;
   created_at: string;
 }
 
@@ -112,6 +113,24 @@ export interface LoggedSet {
   weight_kg: number | null;
   reps: number | null;
   logged_at: string;
+}
+
+// ---------------------------------------------------------------------------
+// Strength assessment — generated once from a body photo + body weight
+// ---------------------------------------------------------------------------
+
+export interface StartingWeightSuggestion {
+  exercise: string;
+  suggestedWeightKg: number;
+  rationale: string;
+}
+
+export interface StrengthAssessment {
+  assessedAt: string;
+  bodyWeightKg: number;
+  estimatedBodyFatPct: number | null;
+  startingWeights: StartingWeightSuggestion[];
+  generalNotes: string;
 }
 
 // ---------------------------------------------------------------------------

@@ -33,7 +33,7 @@ export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Unauthenticated users trying to access protected routes → send to sign-in
-  const protectedPaths = ["/workout", "/program", "/history", "/profile", "/onboarding", "/nutrition"];
+  const protectedPaths = ["/workout", "/program", "/history", "/profile", "/onboarding", "/nutrition", "/assessment"];
   if (!user && protectedPaths.some((p) => pathname.startsWith(p))) {
     const url = request.nextUrl.clone();
     url.pathname = "/";
