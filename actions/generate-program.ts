@@ -27,6 +27,11 @@ export async function generateProgramAction(
     days_per_week: prefs.daysPerWeek,
     equipment: prefs.equipment,
     experience_level: prefs.experienceLevel,
+    age: prefs.age,
+    session_duration_minutes: prefs.sessionDurationMinutes,
+    activity_level: prefs.activityLevel,
+    specific_focus: prefs.specificFocus.length > 0 ? prefs.specificFocus.join(", ") : null,
+    injuries: prefs.injuries || null,
   });
 
   // Retire any existing active program

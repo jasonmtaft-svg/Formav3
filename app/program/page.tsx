@@ -286,9 +286,9 @@ export default async function ProgramPage() {
                   className={[
                     "h-1.5 flex-1 rounded-full",
                     isDone
-                      ? "bg-text-primary"
+                      ? "bg-accent"
                       : isCurrent
-                      ? "bg-text-primary opacity-40"
+                      ? "bg-accent opacity-50"
                       : "bg-border-default",
                   ].join(" ")}
                 />
@@ -311,8 +311,8 @@ export default async function ProgramPage() {
         </div>
         {nextDay?.isToday && (
           <Link
-            href={nextDay.workout ? "/workout" : "/workout"}
-            className="rounded-xl bg-text-primary text-bg px-4 py-2 text-sm font-medium"
+            href="/workout"
+            className="rounded-xl bg-accent text-white px-4 py-2 text-sm font-medium"
           >
             {nextDay.workout ? "Train now" : "Train now"}
           </Link>
@@ -320,7 +320,7 @@ export default async function ProgramPage() {
         {!currentProgramId && (
           <Link
             href="/onboarding"
-            className="rounded-xl bg-text-primary text-bg px-4 py-2 text-sm font-medium"
+            className="rounded-xl bg-accent text-white px-4 py-2 text-sm font-medium"
           >
             Start program
           </Link>
@@ -337,9 +337,9 @@ export default async function ProgramPage() {
             "w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-medium ";
 
           if (day.isCompleted) {
-            circleClass += "bg-text-primary text-bg";
+            circleClass += "bg-accent text-white";
           } else if (day.isToday) {
-            circleClass += "ring-2 ring-text-primary text-text-primary";
+            circleClass += "ring-2 ring-accent text-accent";
           } else if (!day.isPast && day.isTraining) {
             circleClass += "border border-border-default text-text-secondary";
           } else {

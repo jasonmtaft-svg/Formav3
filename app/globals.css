@@ -18,6 +18,8 @@
   --color-text-disabled:  #555555;
 
   /* Accent */
+  --color-accent:         #FF6B35;
+  --color-accent-subtle:  rgba(255, 107, 53, 0.12);
   --color-error:          #e06060;
 
   --font-sans: var(--font-dm-sans);

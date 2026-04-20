@@ -97,7 +97,7 @@ export function ExerciseCard({
           <p className="text-sm text-text-secondary">{detail}</p>
         </div>
         {isPR && (
-          <span className="shrink-0 rounded-full bg-amber-500/15 px-2 py-0.5 text-[11px] font-semibold text-amber-400 uppercase tracking-widest">
+          <span className="shrink-0 rounded-full bg-accent/15 px-2 py-0.5 text-[11px] font-semibold text-accent uppercase tracking-widest">
             PR
           </span>
         )}

@@ -13,7 +13,7 @@ export function Chip({ label, selected, onSelect }: ChipProps) {
       onClick={onSelect}
       className={`rounded-full border px-4 py-2 text-sm transition-colors ${
         selected
-          ? "border-text-primary bg-text-primary text-bg"
+          ? "border-accent bg-accent text-white"
           : "border-border-default bg-transparent text-text-secondary"
       }`}
     >

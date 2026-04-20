@@ -34,7 +34,7 @@ Rules:
     Block 3 "Peak"            — weeks 9–12, maximum intensity, another ~20% exercise swap, 90 s rest
 - Each block has exactly {DAYS_PER_WEEK} day templates (the same templates repeat each week of that block).
 - Every workout uses supersets: paired exercises (A and B) performed back-to-back with no rest between them.
-- Every day template MUST have exactly 4 supersets — never 2, never 3, never fewer than 4. This is a hard requirement.
+- Every day template MUST have exactly {SUPERSET_COUNT} supersets. This is a hard requirement — never fewer, never more.
 - timerSeconds: recommended work duration per exercise in seconds (30–60 s).
 - restSeconds: rest between supersets (match the block guideline above).
 - detail: sets × reps target, e.g. "4 × 8–10 reps" or "3 × 12 reps".
@@ -42,10 +42,20 @@ Rules:
 - progression: one concise sentence describing a harder variation.
 - regression: one concise sentence describing an easier variation.
 - form_cues: exactly 3 short tips (each under 10 words): setup, execution, common mistake to avoid.
-- Tailor every exercise to the user's goal, equipment, and experience level:
-    beginner: machines and simple free-weight movements only. No barbell Olympic lifts, no walking lunges, no single-leg deadlifts, no complex coordination movements. Regressions must be truly accessible (e.g. if the exercise is a lunge, the regression is a split squat hold — not a harder lunge variant). Lower relative loads, higher reps (12–15). Prioritise form over load.
+- Tailor every exercise to the user's goal, equipment, experience level, and specific focus areas:
+    beginner: machines and simple free-weight movements only. No barbell Olympic lifts, no walking lunges, no single-leg deadlifts, no complex coordination movements. Regressions must be truly accessible. Lower relative loads, higher reps (12–15). Prioritise form over load.
     intermediate: mix of machines and free weights. Standard compound movements (squats, deadlifts, bench press, rows) are fine. Moderate loads (8–12 reps).
     advanced: full exercise library including complex compounds, unilateral movements, and higher-skill variations. Lower reps (5–10), heavier loads.
+- Specific focus areas: if the user has listed focus areas (e.g. "Bigger arms", "Stronger legs"), prioritise those muscle groups with extra volume and exercise variety across blocks. They should appear in most sessions where muscle group split allows.
+- Injuries/limitations: strictly avoid exercises that stress the listed areas. Substitute with movements that train the same muscle group through a different angle or with less joint stress.
+- Activity level guidance:
+    sedentary: start conservatively, prioritise movement quality, lower overall volume in Block 1.
+    lightly_active: standard progression, normal volume.
+    active: can handle slightly higher starting volume, faster progression between blocks.
+- Age guidance:
+    Under 30: standard recovery assumptions.
+    30–45: slightly longer rest periods acceptable, prioritise joint-friendly exercise selection.
+    46+: favour machines and cables over heavy free-weight compounds, longer rest, emphasise mobility in form cues.
 - Across blocks, rotate exercises to target the same muscle groups in fresh ways (e.g. switch from barbell bench to incline dumbbell press between blocks).
 - Day structure is determined strictly by days per week — do not deviate:
     1, 2, or 3 days/week → ALL sessions are Full Body (e.g. "Full Body A", "Full Body B", "Full Body C")
@@ -85,19 +95,54 @@ JSON schema:
 // generateProgram — called once on onboarding to build the full 12-week plan
 // ---------------------------------------------------------------------------
 
+const ACTIVITY_LEVEL_LABELS: Record<string, string> = {
+  sedentary: "sedentary (desk job, mostly sitting)",
+  lightly_active: "lightly active (some walking, light activity outside gym)",
+  active: "physically active (active job, sport, or daily exercise outside gym)",
+};
+
+const GOAL_LABELS: Record<string, string> = {
+  build_muscle: "build muscle",
+  lose_fat: "lose fat",
+  improve_fitness: "improve overall fitness",
+};
+
 export async function generateProgram(
   prefs: UserPreferences,
 ): Promise<ProgramBlueprint> {
   const equipmentDesc = EQUIPMENT_DESCRIPTIONS[prefs.equipment] ?? prefs.equipment;
 
-  const systemPrompt = SYSTEM_PROMPT.replace("{DAYS_PER_WEEK}", String(prefs.daysPerWeek));
+  // Superset count driven by session duration
+  const supersetCount = prefs.sessionDurationMinutes === 45 ? 3
+    : prefs.sessionDurationMinutes === 90 ? 5
+    : 4;
 
-  const userMessage = `Goal: ${prefs.goal}
+  const systemPrompt = SYSTEM_PROMPT
+    .replace("{DAYS_PER_WEEK}", String(prefs.daysPerWeek))
+    .replace("{SUPERSET_COUNT}", String(supersetCount));
+
+  const focusNote = prefs.specificFocus.length > 0
+    ? prefs.specificFocus.join(", ")
+    : "No specific preference — general balanced program";
+
+  const injuriesNote = prefs.injuries?.trim()
+    ? prefs.injuries.trim()
+    : "None";
+
+  const activityDesc = ACTIVITY_LEVEL_LABELS[prefs.activityLevel] ?? prefs.activityLevel;
+  const goalDesc = GOAL_LABELS[prefs.goal] ?? prefs.goal;
+
+  const userMessage = `Goal: ${goalDesc}
+Specific focus areas: ${focusNote}
 Experience level: ${prefs.experienceLevel}
+Age: ${prefs.age}
+Activity level outside gym: ${activityDesc}
 Days per week: ${prefs.daysPerWeek}
+Session duration: ${prefs.sessionDurationMinutes} minutes (${supersetCount} supersets per session)
 Equipment: ${equipmentDesc}
+Injuries / areas to avoid: ${injuriesNote}
 
-Generate the full 12-week program. Each block must have exactly ${prefs.daysPerWeek} day template(s). Every single day must have exactly 4 supersets — no exceptions.`;
+Generate the full 12-week program. Each block must have exactly ${prefs.daysPerWeek} day template(s). Every single day must have exactly ${supersetCount} supersets — no exceptions.`;
 
   for (let attempt = 1; attempt <= 3; attempt++) {
     const response = await client.chat.completions.create({
@@ -113,13 +158,13 @@ Generate the full 12-week program. Each block must have exactly ${prefs.daysPerW
     const text = response.choices[0].message.content ?? "";
     const blueprint = JSON.parse(text) as ProgramBlueprint;
 
-    // Reject and retry if any day has fewer than 4 supersets
+    // Reject and retry if any day has the wrong superset count
     const tooFew = blueprint.blocks.some((block) =>
-      block.days.some((day) => day.supersets.length < 4),
+      block.days.some((day) => day.supersets.length < supersetCount),
     );
     if (!tooFew) return blueprint;
 
-    if (attempt === 3) throw new Error("Could not generate a program with 4 supersets per day after 3 attempts.");
+    if (attempt === 3) throw new Error(`Could not generate a program with ${supersetCount} supersets per day after 3 attempts.`);
   }
 
   throw new Error("Unreachable");

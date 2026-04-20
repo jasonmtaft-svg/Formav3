@@ -52,6 +52,7 @@ export interface ProgramBlueprint {
 export type Goal = "build_muscle" | "lose_fat" | "improve_fitness";
 export type Equipment = "full_gym" | "dumbbells_only" | "bodyweight";
 export type ExperienceLevel = "beginner" | "intermediate" | "advanced";
+export type ActivityLevel = "sedentary" | "lightly_active" | "active";
 export type WeightUnit = "kg" | "lbs";
 
 export interface UserPreferences {
@@ -59,6 +60,11 @@ export interface UserPreferences {
   daysPerWeek: number;
   equipment: Equipment;
   experienceLevel: ExperienceLevel;
+  age: number;
+  sessionDurationMinutes: 45 | 60 | 90;
+  activityLevel: ActivityLevel;
+  specificFocus: string[];  // e.g. ["Bigger arms", "Stronger legs"]
+  injuries: string;         // free text, empty string = none
 }
 
 // ---------------------------------------------------------------------------
