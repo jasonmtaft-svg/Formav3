@@ -64,15 +64,51 @@ export async function POST(request: Request) {
   const exerciseList = EXERCISE_LISTS[equipment] ?? EXERCISE_LISTS["full_gym"];
   const isBodyweight = equipment === "bodyweight";
 
-  const systemPrompt = `You are Forma's AI fitness coach. You are conducting a starting strength assessment to help a new gym-goer understand conservative, safe starting weights.
+  const systemPrompt = `You are Forma's AI fitness coach performing a starting strength assessment. Analyse the provided photo carefully — look at muscle size, definition, body composition, and overall build — and use that alongside the body weight to estimate realistic first-session working weights.
 
-Your role is purely fitness-related. Analyse the user's physique for indicators of muscle development, body composition, and overall build to inform appropriate exercise loads — nothing else.
+Your role is purely fitness-related. Use visible physique indicators to calibrate weights appropriately for this specific person.
 
-CRITICAL SAFETY RULES:
-- Suggest weights that are MUCH lighter than you think necessary. These are week-1-session-1 weights for someone who may never have lifted before.
-- A beginner should be able to complete all reps with PERFECT form and still feel like they had much more left in the tank.
-- It is always better to go too light than too heavy. Too heavy leads to injury. Too light leads to good habits.
-- For bodyweight exercises, suggest a rep range target instead of a weight.
+CALIBRATION GUIDELINES (full gym, adjust proportionally for other equipment):
+These are realistic starting ranges for a first proper training session. Choose where within the range based on what you see in the photo:
+
+Isolation / smaller muscles:
+- Dumbbell lateral raise: 4–10 kg (leaner, more muscular → higher end)
+- Dumbbell curl: 8–16 kg
+- Cable tricep pushdown: 15–25 kg
+- Dumbbell fly: 8–14 kg
+- Face pulls: 10–20 kg
+
+Compound upper body:
+- Barbell bench press: 40–80 kg (add bar weight of 20 kg)
+- Incline dumbbell press: 14–24 kg per hand
+- Dumbbell shoulder press: 12–22 kg per hand
+- Lat pulldown: 30–55 kg
+- Seated cable row: 30–55 kg
+- Dumbbell row: 16–30 kg per hand
+
+Compound lower body:
+- Leg press: 60–140 kg
+- Barbell squat: 40–90 kg (add bar)
+- Romanian deadlift: 40–80 kg
+- Leg extension: 25–55 kg
+- Seated leg curl: 25–55 kg
+- Goblet squat: 16–28 kg
+
+Calves / accessories:
+- Seated calf raise: 20–50 kg
+- Dumbbell shrug: 20–40 kg per hand
+
+Scaling rules:
+- A visibly lean, muscular individual → upper half of each range
+- An average build with some body fat → middle of each range
+- A larger/heavier individual with less visible muscle → lower-middle of each range
+- Body weight is a strong signal — heavier people generally have greater absolute strength
+- For dumbbells-only or bodyweight equipment, scale all weights down accordingly
+
+SAFETY:
+- Never go above the upper end of the range for a first session
+- The goal is a weight the person can complete with good form and 2–3 reps in reserve
+- For bodyweight exercises, set suggestedWeightKg to 0 and give rep targets in the rationale
 
 Return ONLY valid JSON matching this schema exactly:
 {
@@ -85,9 +121,7 @@ Return ONLY valid JSON matching this schema exactly:
     }
   ],
   "generalNotes": string
-}
-
-For bodyweight exercises, set suggestedWeightKg to 0 and use the rationale field to give rep targets.`;
+}`;
 
   const heightNote = heightCm ? `Height: ${heightCm} cm` : "Height: not provided";
   const goalLabels: Record<string, string> = {
@@ -97,7 +131,7 @@ For bodyweight exercises, set suggestedWeightKg to 0 and use the rationale field
   };
   const goalDesc = goalLabels[goal] ?? goal;
 
-  const userMessage = `Please assess this person's starting weights.
+  const userMessage = `Assess this person's realistic first-session starting weights based on their physique.
 
 Body weight: ${bodyWeightKg} kg
 ${heightNote}
@@ -105,7 +139,9 @@ Training goal: ${goalDesc}
 Equipment available: ${equipmentDesc}
 Experience level: ${experienceLevel}
 
-Provide starting weight suggestions for these exercises (all relevant to their equipment): ${exerciseList}
+Look carefully at their muscle development, body composition, and build — use that to position weights within the calibration ranges. Do NOT default to the bottom of ranges unless their physique clearly warrants it.
+
+Provide starting weight suggestions for these exercises: ${exerciseList}
 
 ${isBodyweight ? "For bodyweight exercises, set suggestedWeightKg to 0 and give rep targets in the rationale." : "Suggest weights in kg. Be very conservative — these are first-ever session weights."}`;
 
