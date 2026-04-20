@@ -14,10 +14,12 @@ interface WorkoutContextValue {
   session: WorkoutSession | null;
   completedWorkoutId: string | null;
   isLoading: boolean;
+  loadError: string | null;
   weightUnit: WeightUnit;
   prMap: Record<string, number>;
   updateLog: (supersetIndex: number, slot: "a" | "b", log: SetLog) => void;
   advanceSuperset: () => void;
+  retryLoad: () => void;
 }
 
 const WorkoutContext = createContext<WorkoutContextValue | null>(null);
@@ -26,31 +28,44 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<WorkoutSession | null>(null);
   const [completedWorkoutId, setCompletedWorkoutId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [weightUnit, setWeightUnit] = useState<WeightUnit>("kg");
   const [prMap, setPrMap] = useState<Record<string, number>>({});
 
-  useEffect(() => {
-    getLatestWorkoutAction().then((result) => {
-      if (result) {
-        setWeightUnit(result.weightUnit);
-        setPrMap(result.prMap);
-        if (result.completed) {
-          setCompletedWorkoutId(result.workoutId);
-        } else {
-          setSession({
-            plan: result.plan,
-            workoutId: result.workoutId,
-            currentSupersetIndex: 0,
-            logs: result.plan.supersets.map(() => ({
-              a: { weightKg: "", reps: "" },
-              b: { weightKg: "", reps: "" },
-            })),
-          });
+  const load = useCallback(() => {
+    setIsLoading(true);
+    setLoadError(null);
+
+    getLatestWorkoutAction()
+      .then((result) => {
+        if (result) {
+          setWeightUnit(result.weightUnit);
+          setPrMap(result.prMap);
+          if (result.completed) {
+            setCompletedWorkoutId(result.workoutId);
+          } else {
+            setSession({
+              plan: result.plan,
+              workoutId: result.workoutId,
+              currentSupersetIndex: 0,
+              logs: result.plan.supersets.map(() => ({
+                a: { weightKg: "", reps: "" },
+                b: { weightKg: "", reps: "" },
+              })),
+            });
+          }
         }
-      }
-      setIsLoading(false);
-    });
+        setIsLoading(false);
+      })
+      .catch(() => {
+        setLoadError("Couldn't load your workout. Tap retry.");
+        setIsLoading(false);
+      });
   }, []);
+
+  useEffect(() => {
+    load();
+  }, [load]);
 
   const updateLog = useCallback(
     (supersetIndex: number, slot: "a" | "b", log: SetLog) => {
@@ -76,7 +91,17 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <WorkoutContext.Provider
-      value={{ session, completedWorkoutId, isLoading, weightUnit, prMap, updateLog, advanceSuperset }}
+      value={{
+        session,
+        completedWorkoutId,
+        isLoading,
+        loadError,
+        weightUnit,
+        prMap,
+        updateLog,
+        advanceSuperset,
+        retryLoad: load,
+      }}
     >
       {children}
     </WorkoutContext.Provider>

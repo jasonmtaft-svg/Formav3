@@ -34,12 +34,22 @@ export async function getLatestWorkoutAction(): Promise<LatestWorkoutResult | nu
   const startOfDay = new Date();
   startOfDay.setHours(0, 0, 0, 0);
 
-  // Load profile — we need weight_unit, current_program_id, days_per_week
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("weight_unit, current_program_id, days_per_week")
-    .eq("id", user.id)
-    .single();
+  // Round 1 — profile and today's workout are independent, run in parallel
+  const [{ data: profile }, { data: todayWorkout }] = await Promise.all([
+    supabase
+      .from("profiles")
+      .select("weight_unit, current_program_id, days_per_week")
+      .eq("id", user.id)
+      .single(),
+    supabase
+      .from("workouts")
+      .select("id, payload, week_number, block_number")
+      .eq("user_id", user.id)
+      .gte("generated_at", startOfDay.toISOString())
+      .order("generated_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+  ]);
 
   const weightUnit: WeightUnit = (profile?.weight_unit as WeightUnit) ?? "kg";
   const programId: string | null = profile?.current_program_id ?? null;
@@ -50,16 +60,6 @@ export async function getLatestWorkoutAction(): Promise<LatestWorkoutResult | nu
   const mondayBased = dow === 0 ? 6 : dow - 1; // 0 = Mon, 6 = Sun
   const trainingDays = TRAINING_PATTERNS[daysPerWeek] ?? TRAINING_PATTERNS[3];
   const isTodayTraining = trainingDays.includes(mondayBased);
-
-  // Check if a workout already exists for today
-  const { data: todayWorkout } = await supabase
-    .from("workouts")
-    .select("id, payload, week_number, block_number")
-    .eq("user_id", user.id)
-    .gte("generated_at", startOfDay.toISOString())
-    .order("generated_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
 
   let workoutId: string;
   let plan: WorkoutPlan;
@@ -73,24 +73,24 @@ export async function getLatestWorkoutAction(): Promise<LatestWorkoutResult | nu
     weekNumber = todayWorkout.week_number ?? 1;
     blockNumber = todayWorkout.block_number ?? 1;
   } else if (isTodayTraining && programId) {
-    // Derive the next day from the program blueprint
-    const { data: program } = await supabase
-      .from("programs")
-      .select("blueprint, goal, equipment, days_per_week")
-      .eq("id", programId)
-      .single();
+    // Round 2 — blueprint and session count are independent, run in parallel
+    const [{ data: program }, { count: sessionCount }] = await Promise.all([
+      supabase
+        .from("programs")
+        .select("blueprint, goal, equipment, days_per_week")
+        .eq("id", programId)
+        .single(),
+      supabase
+        .from("workouts")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", user.id)
+        .eq("program_id", programId),
+    ]);
 
     if (!program) return null;
 
     const blueprint = program.blueprint as ProgramBlueprint;
     const progDaysPerWeek: number = program.days_per_week;
-
-    // Position in the program = number of workout rows already linked to it
-    const { count: sessionCount } = await supabase
-      .from("workouts")
-      .select("id", { count: "exact", head: true })
-      .eq("user_id", user.id)
-      .eq("program_id", programId);
 
     const position = sessionCount ?? 0;
     const week = Math.floor(position / progDaysPerWeek) + 1;
@@ -162,7 +162,7 @@ export async function getLatestWorkoutAction(): Promise<LatestWorkoutResult | nu
     return null;
   }
 
-  // PR map and completion status
+  // Round 3 — PR map and completion status in parallel
   const [completedResult, prResult] = await Promise.all([
     supabase
       .from("logged_sets")

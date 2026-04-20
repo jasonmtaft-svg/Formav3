@@ -11,7 +11,7 @@ import { useWorkout } from "@/lib/workout-context";
 
 export default function WorkoutPage() {
   const router = useRouter();
-  const { session, completedWorkoutId, isLoading, weightUnit, prMap, updateLog, advanceSuperset } = useWorkout();
+  const { session, completedWorkoutId, isLoading, loadError, weightUnit, prMap, updateLog, advanceSuperset, retryLoad } = useWorkout();
   const superset = session?.plan.supersets[session.currentSupersetIndex];
 
   function handleComplete() {
@@ -26,6 +26,18 @@ export default function WorkoutPage() {
     return (
       <main className="flex min-h-dvh flex-col items-center justify-center px-6">
         <p className="text-text-secondary">Loading workout…</p>
+      </main>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <main className="flex min-h-dvh flex-col items-center justify-center px-6 pb-24">
+        <div className="w-full max-w-sm space-y-4 text-center">
+          <p className="text-text-secondary text-sm">{loadError}</p>
+          <Button onClick={retryLoad}>Retry</Button>
+        </div>
+        <BottomNav />
       </main>
     );
   }
