@@ -36,13 +36,12 @@ const tabs = [
     ),
   },
   {
-    href: "/macros",
-    label: "Macros",
+    href: "/mindset",
+    label: "Mindset",
     icon: (active: boolean) => (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={active ? 2 : 1.5} strokeLinecap="round" strokeLinejoin="round">
-        <circle cx="12" cy="12" r="9" />
-        <path d="M12 8v4M12 16h.01" />
-        <path d="M8 12h8" />
+        <path d="M12 2a7 7 0 0 1 7 7c0 2.5-1.3 4.7-3.2 6L15 21H9l-.8-6A7 7 0 0 1 12 2z" />
+        <path d="M9 21h6" />
       </svg>
     ),
   },
