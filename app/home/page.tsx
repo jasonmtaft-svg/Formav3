@@ -133,7 +133,7 @@ export default async function HomePage() {
 
         {/* ── 1. WORKOUT ──────────────────────────────────────────────────── */}
         <div className="rounded-xl border border-border-default bg-surface p-5">
-          <p className="text-[11px] uppercase tracking-widest text-text-muted mb-3">
+          <p className="text-[11px] uppercase tracking-widest text-text-secondary mb-3">
             Workout
           </p>
 
@@ -207,7 +207,7 @@ export default async function HomePage() {
           className="flex items-center justify-between rounded-xl border border-border-default bg-surface p-5"
         >
           <div>
-            <p className="text-[11px] uppercase tracking-widest text-text-muted mb-3">
+            <p className="text-[11px] uppercase tracking-widest text-text-secondary mb-3">
               Nutrition
             </p>
             <p className="text-base font-semibold">Meal plan &amp; macros</p>
@@ -224,7 +224,7 @@ export default async function HomePage() {
           className="flex items-center justify-between rounded-xl border border-border-default bg-surface p-5"
         >
           <div>
-            <p className="text-[11px] uppercase tracking-widest text-text-muted mb-3">
+            <p className="text-[11px] uppercase tracking-widest text-text-secondary mb-3">
               Mindset
             </p>
             <p className="text-base font-semibold">{mindset.headline}</p>
@@ -236,7 +236,7 @@ export default async function HomePage() {
         {/* ── 4. AWARDS ───────────────────────────────────────────────────── */}
         <div className="rounded-xl border border-border-default bg-surface p-5">
           <div className="flex items-center justify-between mb-3">
-            <p className="text-[11px] uppercase tracking-widest text-text-muted">
+            <p className="text-[11px] uppercase tracking-widest text-text-secondary">
               Awards
             </p>
             {completedWeeks > 0 && (
@@ -253,7 +253,7 @@ export default async function HomePage() {
                 <div
                   key={i}
                   className={`h-2 flex-1 rounded-full transition-colors ${
-                    i < weekSessions ? "bg-accent" : "bg-surface-elevated"
+                    i < weekSessions ? "bg-accent" : "bg-border-default"
                   }`}
                 />
               ))}
@@ -278,14 +278,14 @@ export default async function HomePage() {
                 >
                   <span
                     className={`text-2xl leading-none ${
-                      unlocked ? "" : "opacity-25 grayscale"
+                      unlocked ? "" : "opacity-50 grayscale"
                     }`}
                   >
                     {emoji}
                   </span>
                   <span
                     className={`text-[10px] font-medium text-center leading-tight ${
-                      unlocked ? "text-accent" : "text-text-disabled"
+                      unlocked ? "text-accent" : "text-text-muted"
                     }`}
                   >
                     {label}
@@ -296,7 +296,7 @@ export default async function HomePage() {
           </div>
 
           {completedWeeks === 0 && (
-            <p className="text-xs text-text-muted mt-3 text-center">
+            <p className="text-xs text-text-secondary mt-3 text-center">
               Complete your first full week to earn your first award
             </p>
           )}
