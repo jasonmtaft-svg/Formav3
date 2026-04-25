@@ -40,7 +40,7 @@ export function SignInForm() {
 
         <form className="space-y-3" action={(fd) => startTransition(() => handleAction(fd))}>
           <div>
-            <label htmlFor="email" className="block text-xs text-text-muted mb-1.5">
+            <label htmlFor="email" className="block text-sm font-semibold text-text-primary mb-1.5">
               Email
             </label>
             <input
@@ -55,7 +55,7 @@ export function SignInForm() {
           </div>
 
           <div>
-            <label htmlFor="password" className="block text-xs text-text-muted mb-1.5">
+            <label htmlFor="password" className="block text-sm font-semibold text-text-primary mb-1.5">
               Password
             </label>
             <input
