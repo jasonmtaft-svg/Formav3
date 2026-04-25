@@ -19,11 +19,11 @@ export function Logo({ size = "sm", className }: LogoProps) {
       aria-label="Forma"
     >
       {/* Vertical spine */}
-      <line x1="11" y1="0" x2="11" y2="34" stroke="#f5f5f5" strokeWidth="2" strokeLinecap="round" />
+      <line x1="11" y1="0" x2="11" y2="34" stroke="#1a1a1a" strokeWidth="2" strokeLinecap="round" />
       {/* Left branch */}
-      <path d="M11 12 Q4 10 2 5" stroke="#f5f5f5" strokeWidth="2" strokeLinecap="round" fill="none" />
+      <path d="M11 12 Q4 10 2 5" stroke="#1a1a1a" strokeWidth="2" strokeLinecap="round" fill="none" />
       {/* Right branch */}
-      <path d="M11 18 Q18 16 20 11" stroke="#f5f5f5" strokeWidth="2" strokeLinecap="round" fill="none" />
+      <path d="M11 18 Q18 16 20 11" stroke="#1a1a1a" strokeWidth="2" strokeLinecap="round" fill="none" />
     </svg>
   );
 }
