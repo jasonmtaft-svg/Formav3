@@ -5,6 +5,7 @@ import { recipes, CATEGORY_LABELS } from "@/lib/recipes";
 import type { RecipeCategory } from "@/lib/recipes";
 import { RecipeCard } from "@/components/nutrition/RecipeCard";
 import { MealPlanChat } from "@/components/nutrition/MealPlanChat";
+import { MacrosContent } from "@/components/nutrition/MacrosContent";
 import { BottomNav } from "@/components/ui/BottomNav";
 
 // ---------------------------------------------------------------------------
@@ -90,7 +91,7 @@ const CATEGORIES: RecipeCategory[] = [
   "smoothie",
 ];
 
-type Tab = "chat" | "recipes";
+type Tab = "chat" | "recipes" | "macros";
 
 function NutritionContent() {
   const [tab, setTab] = useState<Tab>("chat");
@@ -102,7 +103,7 @@ function NutritionContent() {
     <div className="flex flex-col h-full">
       {/* Tab bar */}
       <div className="flex border-b border-border-default bg-bg sticky top-0 z-10">
-        {(["chat", "recipes"] as Tab[]).map((t) => (
+        {(["chat", "recipes", "macros"] as Tab[]).map((t) => (
           <button
             key={t}
             onClick={() => setTab(t)}
@@ -112,7 +113,7 @@ function NutritionContent() {
                 : "text-text-disabled"
             }`}
           >
-            {t === "chat" ? "Meal Planner" : "Recipes"}
+            {t === "chat" ? "Meal Planner" : t === "recipes" ? "Recipes" : "Macros"}
           </button>
         ))}
       </div>
@@ -122,6 +123,8 @@ function NutritionContent() {
           <MealPlanChat />
         </div>
       )}
+
+      {tab === "macros" && <MacrosContent />}
 
       {tab === "recipes" && (
         <div className="flex-1 overflow-y-auto">
