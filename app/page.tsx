@@ -8,7 +8,7 @@ export default async function Page() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (user) redirect("/workout");
+  if (user) redirect("/home");
 
   return <SignInForm />;
 }
