@@ -6,6 +6,56 @@ import Link from "next/link";
 import type { Superset, Exercise } from "@/lib/types";
 import { swapExerciseAction } from "@/actions/swap-exercise";
 
+function getDayDescription(dayLabel: string): string {
+  const label = dayLabel.toLowerCase().trim();
+
+  if (label === "full body a")
+    return "Every major muscle group in one session — compound movements form the foundation here";
+  if (label === "full body b")
+    return "A second full-body rotation — varied exercises to hit the same muscles from fresh angles";
+  if (label === "full body c")
+    return "Your third full-body variation — different movement patterns keep adaptation in check";
+  if (label.startsWith("full body"))
+    return "Trains every major muscle group in a single session";
+
+  if (label === "upper a")
+    return "Chest, back, shoulders and arms — compound pressing and pulling patterns";
+  if (label === "upper b")
+    return "Second upper body day — varied angles to complement Upper A";
+  if (label === "upper")
+    return "Chest, back, shoulders and arms in one session";
+
+  if (label === "lower a")
+    return "Quad-dominant lower body — squat patterns and knee-drive movements";
+  if (label === "lower b")
+    return "Hip-dominant lower body — deadlifts, hip hinges and glute-focused work";
+  if (label === "lower")
+    return "Full lower body — quads, hamstrings and glutes";
+
+  if (label === "push a")
+    return "Chest, shoulders and triceps — all the muscles involved in pressing movements";
+  if (label === "push b")
+    return "Second push day — varied angles for chest, shoulders and triceps";
+  if (label === "push")
+    return "Chest, shoulders and triceps — all your pushing muscles";
+
+  if (label === "pull a")
+    return "Back and biceps — rowing, pulling and vertical pull patterns";
+  if (label === "pull b")
+    return "Second pull day — varied back and bicep angles to complement Pull A";
+  if (label === "pull")
+    return "Back and biceps — all your pulling muscles";
+
+  if (label === "legs a")
+    return "Quad-focused lower session — squats, lunges and knee-dominant work";
+  if (label === "legs b")
+    return "Hamstring and glute-focused session — deadlifts and hip-hinge patterns";
+  if (label === "legs")
+    return "Full lower body — quads, hamstrings, glutes and calves";
+
+  return "";
+}
+
 interface WorkoutDayCardProps {
   dayLabel: string;
   dayNum: number;
@@ -238,6 +288,15 @@ export function WorkoutDayCard({
         {/* Superset breakdown — revealed on expand */}
         {open && (
           <div className="border-t border-border-subtle divide-y divide-border-subtle">
+            {/* Day type description */}
+            {(() => {
+              const desc = getDayDescription(workoutName);
+              return desc ? (
+                <div className="px-4 py-3 bg-surface-elevated">
+                  <p className="text-xs text-text-secondary leading-relaxed">{desc}</p>
+                </div>
+              ) : null;
+            })()}
             {supersets.map((superset, i) => (
               <div key={i} className="px-4 py-3">
                 <p className="text-[10px] font-medium uppercase tracking-widest text-text-muted mb-2">

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { BottomNav } from "@/components/ui/BottomNav";
 import { WorkoutDayCard } from "@/components/program/WorkoutDayCard";
+import { AppTutorial } from "@/components/ui/AppTutorial";
 import type { ProgramBlueprint } from "@/lib/types";
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
@@ -404,6 +405,7 @@ export default async function ProgramPage() {
       )}
 
       <BottomNav />
+      <AppTutorial />
     </main>
   );
 }

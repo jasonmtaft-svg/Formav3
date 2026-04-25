@@ -45,7 +45,7 @@ export default function SignUpPage() {
 
         <form className="space-y-3" action={(fd) => startTransition(() => handleAction(fd))}>
           <div>
-            <label htmlFor="name" className="block text-xs text-text-muted mb-1.5">
+            <label htmlFor="name" className="block text-xs font-medium text-text-secondary mb-1.5">
               Name
             </label>
             <input
@@ -54,13 +54,13 @@ export default function SignUpPage() {
               type="text"
               autoComplete="name"
               required
-              className="w-full rounded-xl border border-border-default bg-surface px-4 py-3 text-sm text-text-primary placeholder:text-text-disabled focus:outline-none focus:border-border-active"
+              className="w-full rounded-xl border border-border-default bg-surface px-4 py-3 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-border-active"
               placeholder="Your name"
             />
           </div>
 
           <div>
-            <label htmlFor="email" className="block text-xs text-text-muted mb-1.5">
+            <label htmlFor="email" className="block text-xs font-medium text-text-secondary mb-1.5">
               Email
             </label>
             <input
@@ -69,13 +69,13 @@ export default function SignUpPage() {
               type="email"
               autoComplete="email"
               required
-              className="w-full rounded-xl border border-border-default bg-surface px-4 py-3 text-sm text-text-primary placeholder:text-text-disabled focus:outline-none focus:border-border-active"
+              className="w-full rounded-xl border border-border-default bg-surface px-4 py-3 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-border-active"
               placeholder="you@example.com"
             />
           </div>
 
           <div>
-            <label htmlFor="password" className="block text-xs text-text-muted mb-1.5">
+            <label htmlFor="password" className="block text-xs font-medium text-text-secondary mb-1.5">
               Password
             </label>
             <input
@@ -84,7 +84,7 @@ export default function SignUpPage() {
               type="password"
               autoComplete="new-password"
               required
-              className="w-full rounded-xl border border-border-default bg-surface px-4 py-3 text-sm text-text-primary placeholder:text-text-disabled focus:outline-none focus:border-border-active"
+              className="w-full rounded-xl border border-border-default bg-surface px-4 py-3 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-border-active"
               placeholder="Min. 8 characters"
             />
           </div>
