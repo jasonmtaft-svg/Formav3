@@ -4,6 +4,22 @@ import { useState } from "react";
 import { Logo } from "@/components/ui/Logo";
 import { BottomNav } from "@/components/ui/BottomNav";
 
+// ── Macro food log types ──────────────────────────────────────────────────────
+interface MealEstimate {
+  label: string;
+  description: string;
+  calories: number;
+  proteinG: number;
+  carbsG: number;
+  fatG: number;
+}
+
+interface MacroEstimateResult {
+  meals: MealEstimate[];
+  total: { calories: number; proteinG: number; carbsG: number; fatG: number };
+  note: string;
+}
+
 // ── Mifflin-St Jeor BMR ──────────────────────────────────────────────────────
 // Male:   10w + 6.25h - 5a + 5
 // Female: 10w + 6.25h - 5a - 161
@@ -41,7 +57,41 @@ function calcBMR(sex: Sex, weightKg: number, heightCm: number, age: number) {
   return sex === "male" ? base + 5 : base - 161;
 }
 
+type Tab = "calculator" | "foodlog";
+
 export default function MacrosPage() {
+  const [tab, setTab] = useState<Tab>("calculator");
+
+  // ── Food log state ──────────────────────────────────────────────────────────
+  const [foodDescription, setFoodDescription] = useState("");
+  const [foodResult, setFoodResult] = useState<MacroEstimateResult | null>(null);
+  const [foodLoading, setFoodLoading] = useState(false);
+  const [foodError, setFoodError] = useState<string | null>(null);
+
+  async function handleFoodAnalyse() {
+    setFoodLoading(true);
+    setFoodError(null);
+    setFoodResult(null);
+    try {
+      const res = await fetch("/api/estimate-macros", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ description: foodDescription }),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error ?? "Something went wrong");
+      }
+      const data = await res.json();
+      setFoodResult(data);
+    } catch (e: unknown) {
+      setFoodError(e instanceof Error ? e.message : "Something went wrong");
+    } finally {
+      setFoodLoading(false);
+    }
+  }
+
+  // ── Calculator state ────────────────────────────────────────────────────────
   const [sex, setSex] = useState<Sex>("male");
   const [unit, setUnit] = useState<Unit>("imperial");
   const [age, setAge] = useState("");
@@ -86,12 +136,100 @@ export default function MacrosPage() {
 
   return (
     <main className="flex min-h-dvh flex-col px-6 py-10 pb-28">
-      <div className="flex items-center gap-3 mb-8">
+      <div className="flex items-center gap-3 mb-6">
         <Logo />
         <h1 className="text-xl font-semibold">Macros</h1>
       </div>
 
-      <div className="space-y-5">
+      {/* Tab bar */}
+      <div className="flex rounded-lg overflow-hidden border border-border-default mb-6">
+        {(["calculator", "foodlog"] as Tab[]).map((t) => (
+          <button
+            key={t}
+            type="button"
+            onClick={() => setTab(t)}
+            className={`flex-1 py-2 text-sm font-medium transition-colors ${
+              tab === t ? "bg-accent text-white" : "text-text-secondary"
+            }`}
+          >
+            {t === "calculator" ? "Calculator" : "Food Log"}
+          </button>
+        ))}
+      </div>
+
+      {/* ── Food Log tab ───────────────────────────────────────────────────── */}
+      {tab === "foodlog" && (
+        <div className="space-y-4">
+          <div className="rounded-xl border border-border-default bg-surface p-4 space-y-3">
+            <p className="text-xs text-text-muted uppercase tracking-widest">What did you eat today?</p>
+            <textarea
+              rows={6}
+              placeholder={"Breakfast: 2 scrambled eggs, 2 slices of toast with butter\nLunch: chicken wrap with salad\nDinner: salmon fillet, rice, broccoli\nSnack: protein shake, banana"}
+              value={foodDescription}
+              onChange={(e) => setFoodDescription(e.target.value)}
+              className="w-full rounded-lg border border-border-default bg-bg px-3 py-2 text-sm text-text-primary placeholder:text-text-disabled focus:outline-none resize-none"
+            />
+            <button
+              type="button"
+              onClick={handleFoodAnalyse}
+              disabled={foodLoading || foodDescription.trim().length < 5}
+              className="w-full rounded-xl bg-accent py-3 text-sm font-semibold text-white disabled:opacity-50 transition-opacity"
+            >
+              {foodLoading ? "Analysing…" : "Analyse meals"}
+            </button>
+            {foodError && (
+              <p className="text-xs text-red-400">{foodError}</p>
+            )}
+          </div>
+
+          {foodResult && (
+            <>
+              {foodResult.meals.map((meal, i) => (
+                <div key={i} className="rounded-xl border border-border-default bg-surface p-4 space-y-2">
+                  <p className="text-sm font-semibold text-text-primary">{meal.label}</p>
+                  <p className="text-xs text-text-muted">{meal.description}</p>
+                  <div className="flex justify-between items-center pt-1">
+                    <span className="text-sm text-text-secondary">{meal.calories} kcal</span>
+                    <div className="flex gap-3 text-xs text-text-muted">
+                      <span>{meal.proteinG}g protein</span>
+                      <span>{meal.carbsG}g carbs</span>
+                      <span>{meal.fatG}g fat</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+
+              <div className="rounded-xl border border-accent/30 bg-accent/10 p-4 space-y-3">
+                <p className="text-xs text-text-muted uppercase tracking-widest">Daily total</p>
+                <div className="flex justify-between items-center">
+                  <p className="text-sm text-text-secondary">Calories</p>
+                  <p className="text-2xl font-bold text-text-primary">{foodResult.total.calories.toLocaleString()}</p>
+                </div>
+                <div className="border-t border-border-subtle pt-3 grid grid-cols-3 gap-3">
+                  <div className="text-center">
+                    <p className="text-lg font-bold text-text-primary">{foodResult.total.proteinG}g</p>
+                    <p className="text-xs text-text-muted mt-0.5">Protein</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-lg font-bold text-text-primary">{foodResult.total.carbsG}g</p>
+                    <p className="text-xs text-text-muted mt-0.5">Carbs</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-lg font-bold text-text-primary">{foodResult.total.fatG}g</p>
+                    <p className="text-xs text-text-muted mt-0.5">Fat</p>
+                  </div>
+                </div>
+                {foodResult.note && (
+                  <p className="text-xs text-text-muted border-t border-border-subtle pt-3">{foodResult.note}</p>
+                )}
+              </div>
+            </>
+          )}
+        </div>
+      )}
+
+      {/* ── Calculator tab ─────────────────────────────────────────────────── */}
+      {tab === "calculator" && <div className="space-y-5">
         {/* Sex */}
         <div className="rounded-xl border border-border-default bg-surface p-4">
           <p className="text-xs text-text-muted uppercase tracking-widest mb-3">Sex</p>
@@ -322,7 +460,7 @@ export default function MacrosPage() {
             </div>
           </div>
         )}
-      </div>
+      </div>}
 
       <BottomNav />
     </main>

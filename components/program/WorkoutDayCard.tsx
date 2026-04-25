@@ -258,7 +258,7 @@ export function WorkoutDayCard({
                               <button
                                 type="button"
                                 onClick={() => handleSwapRequest(i, slot, ex.name)}
-                                className="shrink-0 text-[11px] text-text-muted border border-border-subtle rounded-md px-2 py-0.5 leading-none"
+                                className="shrink-0 text-[11px] font-medium text-accent border border-accent/30 rounded-md px-2 py-0.5 leading-none"
                               >
                                 Swap
                               </button>

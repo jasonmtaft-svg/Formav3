@@ -20,7 +20,14 @@ export interface LatestWorkoutResult {
   prMap: Record<string, number>;
   weekNumber: number;
   blockNumber: number;
+  isDeload: boolean;
+  goal: string;
+  equipment: string;
+  experienceLevel: string;
 }
+
+const DELOAD_THRESHOLD_DAYS = 10;
+const DELOAD_MULTIPLIER = 0.85;
 
 export async function getLatestWorkoutAction(): Promise<LatestWorkoutResult | null> {
   const supabase = await createClient();
@@ -38,12 +45,12 @@ export async function getLatestWorkoutAction(): Promise<LatestWorkoutResult | nu
   const [{ data: profile }, { data: todayWorkout }] = await Promise.all([
     supabase
       .from("profiles")
-      .select("weight_unit, current_program_id, days_per_week")
+      .select("weight_unit, current_program_id, days_per_week, experience_level")
       .eq("id", user.id)
       .single(),
     supabase
       .from("workouts")
-      .select("id, payload, week_number, block_number")
+      .select("id, payload, week_number, block_number, goal, equipment")
       .eq("user_id", user.id)
       .gte("generated_at", startOfDay.toISOString())
       .order("generated_at", { ascending: false })
@@ -54,6 +61,7 @@ export async function getLatestWorkoutAction(): Promise<LatestWorkoutResult | nu
   const weightUnit: WeightUnit = (profile?.weight_unit as WeightUnit) ?? "kg";
   const programId: string | null = profile?.current_program_id ?? null;
   const daysPerWeek: number = profile?.days_per_week ?? 3;
+  const experienceLevel: string = profile?.experience_level ?? "intermediate";
 
   // Is today a scheduled training day?
   const dow = new Date().getDay(); // 0 = Sun
@@ -65,6 +73,9 @@ export async function getLatestWorkoutAction(): Promise<LatestWorkoutResult | nu
   let plan: WorkoutPlan;
   let weekNumber = 1;
   let blockNumber = 1;
+  let isDeload = false;
+  let programGoal = "build_muscle";
+  let programEquipment = "full_gym";
 
   if (todayWorkout) {
     // Re-use what's already there
@@ -72,6 +83,8 @@ export async function getLatestWorkoutAction(): Promise<LatestWorkoutResult | nu
     plan = todayWorkout.payload as WorkoutPlan;
     weekNumber = todayWorkout.week_number ?? 1;
     blockNumber = todayWorkout.block_number ?? 1;
+    programGoal = todayWorkout.goal ?? programGoal;
+    programEquipment = todayWorkout.equipment ?? programEquipment;
   } else if (isTodayTraining && programId) {
     // Round 2 — blueprint and session count are independent, run in parallel
     const [{ data: program }, { count: sessionCount }] = await Promise.all([
@@ -88,6 +101,9 @@ export async function getLatestWorkoutAction(): Promise<LatestWorkoutResult | nu
     ]);
 
     if (!program) return null;
+
+    programGoal = program.goal;
+    programEquipment = program.equipment;
 
     const blueprint = program.blueprint as ProgramBlueprint;
     const progDaysPerWeek: number = program.days_per_week;
@@ -112,15 +128,26 @@ export async function getLatestWorkoutAction(): Promise<LatestWorkoutResult | nu
 
     const { data: prevSets } = await supabase
       .from("logged_sets")
-      .select("exercise_name, weight_kg, reps")
+      .select("exercise_name, weight_kg, reps, logged_at, feedback")
       .eq("user_id", user.id)
       .in("exercise_name", exerciseNames)
       .order("logged_at", { ascending: false });
 
-    const latestByExercise = new Map<string, { weight_kg: number | null; reps: number | null }>();
+    // Deload detection — if last session was >10 days ago, reduce weights by 15%
+    const mostRecentLoggedAt = prevSets?.[0]?.logged_at ?? null;
+    if (mostRecentLoggedAt) {
+      const daysSince = (Date.now() - new Date(mostRecentLoggedAt).getTime()) / (1000 * 60 * 60 * 24);
+      if (daysSince > DELOAD_THRESHOLD_DAYS) isDeload = true;
+    }
+
+    const latestByExercise = new Map<string, { weight_kg: number | null; reps: number | null; feedback: string | null }>();
     for (const row of prevSets ?? []) {
       if (!latestByExercise.has(row.exercise_name)) {
-        latestByExercise.set(row.exercise_name, { weight_kg: row.weight_kg, reps: row.reps });
+        latestByExercise.set(row.exercise_name, {
+          weight_kg: row.weight_kg,
+          reps: row.reps,
+          feedback: row.feedback ?? null,
+        });
       }
     }
 
@@ -132,8 +159,8 @@ export async function getLatestWorkoutAction(): Promise<LatestWorkoutResult | nu
         const prevB = latestByExercise.get(s.b.name);
         return {
           ...s,
-          a: { ...s.a, prev: formatPrev(prevA) },
-          b: { ...s.b, prev: formatPrev(prevB) },
+          a: { ...s.a, prev: formatPrev(prevA, isDeload) },
+          b: { ...s.b, prev: formatPrev(prevB, isDeload) },
         };
       }),
     };
@@ -193,15 +220,27 @@ export async function getLatestWorkoutAction(): Promise<LatestWorkoutResult | nu
     prMap,
     weekNumber,
     blockNumber,
+    isDeload,
+    goal: programGoal,
+    equipment: programEquipment,
+    experienceLevel,
   };
 }
 
 function formatPrev(
-  entry: { weight_kg: number | null; reps: number | null } | undefined,
+  entry: { weight_kg: number | null; reps: number | null; feedback: string | null } | undefined,
+  deload: boolean,
 ): string {
   if (!entry) return "First session";
+  let weightKg = entry.weight_kg;
   const parts: string[] = [];
-  if (entry.weight_kg) parts.push(`${entry.weight_kg} kg`);
+  if (weightKg) {
+    if (deload) weightKg = Math.round(weightKg * DELOAD_MULTIPLIER * 4) / 4; // round to nearest 0.25
+    parts.push(`${weightKg} kg`);
+  }
   if (entry.reps) parts.push(`${entry.reps} reps`);
-  return parts.length > 0 ? parts.join(" × ") : "First session";
+  const base = parts.length > 0 ? parts.join(" × ") : "First session";
+  if (entry.feedback === "easy") return `${base} · push harder today`;
+  if (entry.feedback === "hard") return `${base} · go lighter today`;
+  return base;
 }

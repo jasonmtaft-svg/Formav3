@@ -17,6 +17,7 @@ interface ExerciseCardProps {
   form_cues?: string[];
   onWeightChange: (v: string) => void;
   onRepsChange: (v: string) => void;
+  onSwap?: () => void;
 }
 
 const KG_TO_LBS = 2.20462;
@@ -73,6 +74,7 @@ export function ExerciseCard({
   form_cues,
   onWeightChange,
   onRepsChange,
+  onSwap,
 }: ExerciseCardProps) {
   const [showAlts, setShowAlts] = useState(false);
   const [showCues, setShowCues] = useState(false);
@@ -89,18 +91,29 @@ export function ExerciseCard({
   return (
     <div className="rounded-xl border border-border-default bg-surface p-4 space-y-3">
       <div className="flex items-start justify-between gap-2">
-        <div>
+        <div className="flex-1 min-w-0">
           <p className="text-[11px] font-medium uppercase tracking-widest text-text-muted">
             Exercise {slot}
           </p>
           <p className="mt-0.5 text-base font-semibold text-text-primary">{name}</p>
           <p className="text-sm text-text-secondary">{detail}</p>
         </div>
-        {isPR && (
-          <span className="shrink-0 rounded-full bg-accent/15 px-2 py-0.5 text-[11px] font-semibold text-accent uppercase tracking-widest">
-            PR
-          </span>
-        )}
+        <div className="flex items-center gap-2 shrink-0">
+          {onSwap && (
+            <button
+              type="button"
+              onClick={onSwap}
+              className="rounded-lg border border-border-default px-2.5 py-1 text-xs font-medium text-text-secondary"
+            >
+              Swap
+            </button>
+          )}
+          {isPR && (
+            <span className="rounded-full bg-accent/15 px-2 py-0.5 text-[11px] font-semibold text-accent uppercase tracking-widest">
+              PR
+            </span>
+          )}
+        </div>
       </div>
 
       <div className="flex gap-2">

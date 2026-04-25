@@ -148,9 +148,12 @@ export interface SetLog {
   reps: string;
 }
 
+export type SetFeedback = "easy" | "hard" | null;
+
 export interface SupersetLog {
   a: SetLog;
   b: SetLog;
+  feedback: SetFeedback;
 }
 
 export interface WorkoutSession {

@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { DM_Sans } from "next/font/google";
 import "./globals.css";
+import { ServiceWorkerRegistration } from "@/components/ServiceWorkerRegistration";
 
 const dmSans = DM_Sans({
   variable: "--font-dm-sans",
@@ -18,7 +19,11 @@ export const metadata: Metadata = {
     title: "Forma",
   },
   icons: {
-    apple: "/icon.svg",
+    apple: "/apple-touch-icon.png",
+    icon: [
+      { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icon-512.png", sizes: "512x512", type: "image/png" },
+    ],
   },
 };
 
@@ -36,6 +41,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${dmSans.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col bg-bg text-text-primary font-sans">
+        <ServiceWorkerRegistration />
         {children}
       </body>
     </html>

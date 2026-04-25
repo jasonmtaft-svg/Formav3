@@ -44,6 +44,7 @@ export async function logWorkoutAction(
         exercise_name: superset?.a.name ?? "",
         weight_kg: toKg(log.a.weightKg, weightUnit),
         reps: log.a.reps ? parseInt(log.a.reps, 10) : null,
+        feedback: log.feedback ?? null,
       },
       {
         workout_id: workoutId,
@@ -53,6 +54,7 @@ export async function logWorkoutAction(
         exercise_name: superset?.b.name ?? "",
         weight_kg: toKg(log.b.weightKg, weightUnit),
         reps: log.b.reps ? parseInt(log.b.reps, 10) : null,
+        feedback: log.feedback ?? null,
       },
     ];
   });
