@@ -4,7 +4,6 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Logo } from "@/components/ui/Logo";
 import { BottomNav } from "@/components/ui/BottomNav";
-import { generateProgramAction } from "@/actions/generate-program";
 import type { Goal, Equipment, ExperienceLevel, ActivityLevel } from "@/lib/types";
 
 // ─── Step data ───────────────────────────────────────────────────────────────
@@ -132,17 +131,25 @@ export default function OnboardingPage() {
     }, 1200);
 
     try {
-      await generateProgramAction({
-        goal,
-        daysPerWeek: days,
-        equipment,
-        experienceLevel,
-        age: ageNum,
-        sessionDurationMinutes: sessionDuration,
-        activityLevel,
-        specificFocus,
-        injuries: noInjuries ? "" : injuries.trim(),
+      const res = await fetch("/api/generate-program", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          goal,
+          daysPerWeek: days,
+          equipment,
+          experienceLevel,
+          age: ageNum,
+          sessionDurationMinutes: sessionDuration,
+          activityLevel,
+          specificFocus,
+          injuries: noInjuries ? "" : injuries.trim(),
+        }),
       });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Something went wrong.");
+
       router.refresh();
       router.push("/program/overview");
     } catch (err) {

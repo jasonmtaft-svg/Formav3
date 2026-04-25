@@ -210,28 +210,43 @@ Injuries / areas to avoid: ${injuriesNote}
 
 Generate the full 12-week program. Each block must have exactly ${prefs.daysPerWeek} day template(s). Every single day must have exactly ${supersetCount} supersets — no exceptions.${prefs.goal === "improve_fitness" ? " Every session must include exactly 1 superset where exercise B is a cardio movement. Cardio intensity must increase across blocks." : ""}`;
 
+  let lastError: Error | null = null;
+
   for (let attempt = 1; attempt <= 3; attempt++) {
-    const response = await client.chat.completions.create({
-      model: "gpt-4o",
-      max_tokens: 16000,
-      response_format: { type: "json_object" },
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: userMessage },
-      ],
-    });
+    try {
+      const response = await client.chat.completions.create({
+        model: "gpt-4o",
+        max_tokens: 16000,
+        response_format: { type: "json_object" },
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userMessage },
+        ],
+      });
 
-    const text = response.choices[0].message.content ?? "";
-    const blueprint = JSON.parse(text) as ProgramBlueprint;
+      const text = response.choices[0].message.content ?? "";
 
-    // Reject and retry if any day has the wrong superset count
-    const tooFew = blueprint.blocks.some((block) =>
-      block.days.some((day) => day.supersets.length < supersetCount),
-    );
-    if (!tooFew) return blueprint;
+      let blueprint: ProgramBlueprint;
+      try {
+        blueprint = JSON.parse(text) as ProgramBlueprint;
+      } catch {
+        lastError = new Error(`Attempt ${attempt}: response was not valid JSON`);
+        continue;
+      }
 
-    if (attempt === 3) throw new Error(`Could not generate a program with ${supersetCount} supersets per day after 3 attempts.`);
+      // Reject and retry if any day has the wrong superset count
+      const tooFew = blueprint.blocks.some((block) =>
+        block.days.some((day) => day.supersets.length < supersetCount),
+      );
+      if (!tooFew) return blueprint;
+
+      lastError = new Error(`Attempt ${attempt}: some days had fewer than ${supersetCount} supersets`);
+    } catch (err) {
+      lastError = err instanceof Error ? err : new Error(String(err));
+    }
   }
 
-  throw new Error("Unreachable");
+  throw new Error(
+    lastError?.message ?? `Could not generate a valid program after 3 attempts.`
+  );
 }
